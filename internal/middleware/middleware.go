@@ -30,7 +30,7 @@ func ApplyMiddleware(e *echo.Echo) {
 
 	// Responds with contents of static folder for all non api requests
 	e.Use(middleware.StaticWithConfig(middleware.StaticConfig{
-		Root:   "../../static",
+		Root:   "../../public",
 		HTML5:  true,
 		Browse: true,
 		Skipper: func(c echo.Context) bool {
