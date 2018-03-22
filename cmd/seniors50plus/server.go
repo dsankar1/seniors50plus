@@ -11,7 +11,7 @@ import (
 
 func main() {
 	e := echo.New()
-	e.AutoTLSManager.HostPolicy = autocert.HostWhitelist("http://daryans-page.com")
+	e.AutoTLSManager.HostPolicy = autocert.HostWhitelist("daryans-page.com")
 	e.AutoTLSManager.Cache = autocert.DirCache("/var/www/.cache")
 	middleware.ApplyMiddleware(e)
 
