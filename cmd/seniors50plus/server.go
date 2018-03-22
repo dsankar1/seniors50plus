@@ -16,7 +16,10 @@ func main() {
 	middleware.ApplyMiddleware(e)
 
 	e.GET("/api", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, struct{ message string }{"Welcome to the API."})
+		return c.JSON(http.StatusOK, "Welcome to the api")
+	})
+	e.GET("/api/test", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, c.Path())
 	})
 	e.POST("/api/authenticate", auth.AuthenticationHandler)
 	e.POST("/api/register", auth.RegistrationHandler)
