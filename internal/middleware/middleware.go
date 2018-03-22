@@ -18,8 +18,8 @@ func ApplyMiddleware(e *echo.Echo) {
 	e.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey: []byte(JwtSecret),
 		Skipper: func(c echo.Context) bool {
-			if strings.HasPrefix(c.Path(), "/api/") {
-				if c.Path() != "/api/authenticate" || c.Path() != "/api/register" {
+			if strings.HasPrefix(c.Path(), "/api") {
+				if c.Path() == "/api/authenticate" || c.Path() == "/api/register" {
 					return true
 				}
 				return false
@@ -34,7 +34,7 @@ func ApplyMiddleware(e *echo.Echo) {
 		HTML5:  true,
 		Browse: true,
 		Skipper: func(c echo.Context) bool {
-			if strings.HasPrefix(c.Path(), "/api/") {
+			if strings.HasPrefix(c.Path(), "/api") {
 				return true
 			}
 			return false
