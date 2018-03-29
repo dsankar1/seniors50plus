@@ -1,15 +1,21 @@
 package user
 
 type User struct {
-	Email     string  `json:"email"`
-	Firstname string  `json:"firstname"`
-	Lastname  string  `json:"lastname"`
-	Gender    string  `json:"gender"`
-	Age       uint16  `json:"age"`
-	Budget    float32 `json:"budget"`
-	Location  `json:"location"`
-	Tags      []string `json:"tags"`
-	Admin     bool     `json:"admin"`
+	Email            string   `json:"email"`
+	Firstname        string   `json:"firstname"`
+	Lastname         string   `json:"lastname"`
+	Gender           string   `json:"gender"`
+	Age              uint16   `json:"age"`
+	Budget           float32  `json:"budget"`
+	Smoker           bool     `json:"smoker"`
+	PetOwner         bool     `json:"petOwner"`
+	MaxRoommateCount uint     `json:"maxRoommateCount"`
+	SeekingWithCount uint     `json:"seekingWithCount"`
+	LocationOwner    bool     `json:"locationOwner"`
+	Active           bool     `json:"active"`
+	Tags             []string `json:"tags"`
+	Admin            bool     `json:"admin"`
+	Location         `json:"location"`
 }
 
 type Location struct {
