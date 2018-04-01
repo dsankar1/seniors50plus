@@ -13,8 +13,9 @@ type User struct {
 	SeekingWithCount uint     `json:"seekingWithCount"`
 	LocationOwner    bool     `json:"locationOwner"`
 	Active           bool     `json:"active"`
-	Tags             []string `json:"tags"`
 	Admin            bool     `json:"admin"`
+	Blocked          []string `json:"blocked"`
+	Tags             []string `json:"tags"`
 	Location         `json:"location"`
 }
 
