@@ -1,26 +1,34 @@
 package user
 
+const (
+	AdminLevelUser      = "user"
+	AdminLevelModerator = "moderator"
+	AdminLevelSusan     = "Susan"
+	Male                = "male"
+	Female              = "female"
+	Other               = "other"
+)
+
 type User struct {
-	Email            string   `json:"email"`
-	Firstname        string   `json:"firstname"`
-	Lastname         string   `json:"lastname"`
-	Gender           string   `json:"gender"`
-	Age              uint16   `json:"age"`
-	Budget           float32  `json:"budget"`
-	Smoker           bool     `json:"smoker"`
-	PetOwner         bool     `json:"petOwner"`
-	MaxRoommateCount uint     `json:"maxRoommateCount"`
-	SeekingWithCount uint     `json:"seekingWithCount"`
-	LocationOwner    bool     `json:"locationOwner"`
-	Active           bool     `json:"active"`
-	Admin            bool     `json:"admin"`
-	Blocked          []string `json:"blocked"`
-	Tags             []string `json:"tags"`
-	Location         `json:"location"`
+	Email           string   `json:"email"`
+	Firstname       string   `json:"firstname"`
+	Lastname        string   `json:"lastname"`
+	Gender          string   `json:"gender"`
+	Age             uint16   `json:"age"`
+	AdminLevel      string   `json:"adminLevel"`
+	About           string   `json:"about"`
+	Tags            []string `json:"tags"`
+	ProfileImageUrl string   `json:"profileImageUrl"`
 }
 
-type Location struct {
-	State string `json:"state"`
-	City  string `json:"city"`
-	Zip   uint   `json:"zip"`
+var ExampleUser = User{
+	Email:           "JohnDoe@gmail.com",
+	Firstname:       "John",
+	Lastname:        "Doe",
+	Gender:          "male",
+	Age:             56,
+	AdminLevel:      AdminLevelUser,
+	About:           "Hello, I'm John Doe!",
+	Tags:            []string{"Neat freak", "Early Bird", "Vegan", "Sports", "Dogs"},
+	ProfileImageUrl: "https://someamazonbucket.com",
 }

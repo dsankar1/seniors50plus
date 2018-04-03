@@ -5,13 +5,12 @@ import (
 )
 
 type Error struct {
-	message string `json:"message"`
+	Message string `json:"error"`
 }
 
 type AuthResponse struct {
 	User  user.User `json:"user"`
 	Token string    `json:"token"`
-	Error `json:"error"`
 }
 
 type RegisterRequest struct {

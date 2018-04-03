@@ -1,13 +1,12 @@
 package middleware
 
 import (
+	"seniors50plus/internal/auth"
 	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
-
-var JwtSecret string = "temporary"
 
 func ApplyMiddleware(e *echo.Echo) {
 
@@ -16,10 +15,10 @@ func ApplyMiddleware(e *echo.Echo) {
 
 	// Checks incoming requests to api endpoints for JWT (excludes authenticate and register endpoints)
 	e.Use(middleware.JWTWithConfig(middleware.JWTConfig{
-		SigningKey: []byte(JwtSecret),
+		SigningKey: auth.GetKey(),
 		Skipper: func(c echo.Context) bool {
 			if strings.HasPrefix(c.Path(), "/api") {
-				if c.Path() == "/api/authenticate" || c.Path() == "/api/register" {
+				if c.Path() == "/api/authenticate" || c.Path() == "/api/register" || c.Path() == "/api/test/authenticate" {
 					return true
 				}
 				return false
@@ -43,7 +42,7 @@ func ApplyMiddleware(e *echo.Echo) {
 
 	// CORS
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		//AllowOrigins: []string{"https://seniors50plus.com"},
+		//AllowOrigins: []string{"https://roommates40plus.com"},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 }
