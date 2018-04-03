@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"seniors50plus/internal/auth"
+	"seniors50plus/internal/match"
 	"seniors50plus/internal/middleware"
 	"time"
 
@@ -16,14 +17,13 @@ func main() {
 	e.AutoTLSManager.Cache = autocert.DirCache("./var/www/.cache")
 	middleware.ApplyMiddleware(e)
 
-	e.GET("/api", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, "Welcome to the api")
-	})
-	e.GET("/api/test", func(c echo.Context) error {
-		return c.JSON(http.StatusOK, c.Path())
-	})
 	e.POST("/api/authenticate", auth.AuthenticationHandler)
+
+	e.POST("/api/test/authenticate", auth.AuthenticationHandlerTest)
+
 	e.POST("/api/register", auth.RegistrationHandler)
+
+	e.POST("/api/test/match", match.FindMatchesHandlerTest)
 
 	s := &http.Server{
 		Addr:         ":1323",
