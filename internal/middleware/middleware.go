@@ -12,7 +12,8 @@ func ApplyMiddleware(e *echo.Echo) {
 
 	// Redirects to https
 	//e.Pre(middleware.HTTPSRedirect())
-
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 	// Checks incoming requests to api endpoints for JWT (excludes authenticate and register endpoints)
 	e.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey: auth.GetKey(),
