@@ -13,7 +13,7 @@ type AuthResponse struct {
 	Token string    `json:"token"`
 }
 
-type RegisterRequest struct {
+type RegistrationRequest struct {
 	Email     string `json:"email"`
 	Password  string `json:"password"`
 	Firstname string `json:"firstname"`

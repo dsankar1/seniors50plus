@@ -1,8 +1,11 @@
 package auth
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 	"os"
+	"reflect"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -30,5 +33,17 @@ func AuthenticationHandler(c echo.Context) error {
 }
 
 func RegistrationHandler(c echo.Context) error {
+	info := new(RegistrationRequest)
+	if err := c.Bind(info); err != nil {
+		return err
+	}
+	fmt.Println("Received Info:", info)
+	if !Validate(info) {
+		return errors.New("Missing fields")
+	}
 	return c.JSON(http.StatusOK, c.Path())
+}
+
+func Validate(x interface{}) bool {
+	return reflect.DeepEqual(x, reflect.Zero(reflect.TypeOf(x)).Interface())
 }
