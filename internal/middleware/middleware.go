@@ -19,9 +19,20 @@ func ApplyMiddleware(e *echo.Echo) {
 		SigningKey: auth.GetKey(),
 		Skipper: func(c echo.Context) bool {
 			if strings.HasPrefix(c.Path(), "/api") {
-				if c.Path() == "/api/authenticate" || c.Path() == "/api/register" || c.Path() == "/api/test/authenticate" {
+				if strings.HasPrefix(c.Path(), "/api/authenticate") || strings.HasPrefix(c.Path(), "/api/register") || c.Path() == "/api/test/authenticate" {
 					return true
 				}
+				return false
+			}
+			return true
+		},
+	}))
+
+	e.Use(middleware.JWTWithConfig(middleware.JWTConfig{
+		SigningKey:  auth.GetKey(),
+		TokenLookup: "query:token",
+		Skipper: func(c echo.Context) bool {
+			if strings.HasPrefix(c.Path(), "/api/register/confirmation") {
 				return false
 			}
 			return true

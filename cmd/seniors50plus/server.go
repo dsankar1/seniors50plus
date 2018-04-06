@@ -23,6 +23,8 @@ func main() {
 
 	e.POST("/api/register", auth.RegistrationHandler)
 
+	e.GET("/api/register/confirmation", auth.RegistrationConfirmationHandler)
+
 	e.POST("/api/test/match", match.FindMatchesHandlerTest)
 
 	s := &http.Server{

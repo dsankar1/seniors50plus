@@ -36,10 +36,10 @@ func catchPanic(err *error, functionName string) {
 	}
 }
 
-func SendEmail(host string, port int, userName string, password string, to []string, subject string, info *RegistrationRequest) (err error) {
+func SendEmail(host string, port int, userName string, password string, to []string, subject string, templatePath string, info TemplateInfo) (err error) {
 	defer catchPanic(&err, "SendEmail")
 
-	t, err := template.ParseFiles("../../internal/auth/templates/template.html")
+	t, err := template.ParseFiles(templatePath)
 	if err != nil {
 		return err
 	}
