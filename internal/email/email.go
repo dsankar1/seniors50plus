@@ -1,4 +1,4 @@
-package auth
+package email
 
 import (
 	"bytes"
@@ -6,6 +6,7 @@ import (
 	"html/template"
 	"net/smtp"
 	"runtime"
+	"seniors50plus/internal/models"
 )
 
 const (
@@ -36,7 +37,7 @@ func catchPanic(err *error, functionName string) {
 	}
 }
 
-func SendEmail(host string, port int, userName string, password string, to []string, subject string, templatePath string, info TemplateInfo) (err error) {
+func SendEmail(host string, port int, userName string, password string, to []string, subject string, templatePath string, info models.TemplateInfo) (err error) {
 	defer catchPanic(&err, "SendEmail")
 
 	t, err := template.ParseFiles(templatePath)

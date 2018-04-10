@@ -12,7 +12,7 @@ const (
 	invalidFormat        = "Invalid email format"
 	unresolvedHost       = "Unresolved email host"
 	nonexistentUser      = "Provided email account doesn't exist"
-	registrationTemplate = "../../internal/auth/templates/registration.html"
+	registrationTemplate = "../../templates/registration.html"
 )
 
 func GetKey() []byte {

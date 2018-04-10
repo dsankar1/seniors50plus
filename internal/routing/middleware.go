@@ -1,25 +1,29 @@
-package middleware
+package routing
 
 import (
 	"seniors50plus/internal/auth"
+	"seniors50plus/internal/models"
 	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	validator "gopkg.in/go-playground/validator.v9"
 )
 
-func ApplyMiddleware(e *echo.Echo) {
-
-	// Redirects to https
+func RegisterMiddleware(e *echo.Echo) {
 	//e.Pre(middleware.HTTPSRedirect())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
-	// Checks incoming requests to api endpoints for JWT (excludes authenticate and register endpoints)
+
+	// Custom request validator
+	e.Validator = &models.Validator{Validator: validator.New()}
+
+	// Checks for token in authorization header if an api request is recieved(excluding auth endpoints)
 	e.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey: auth.GetKey(),
 		Skipper: func(c echo.Context) bool {
 			if strings.HasPrefix(c.Path(), "/api") {
-				if strings.HasPrefix(c.Path(), "/api/authenticate") || strings.HasPrefix(c.Path(), "/api/register") || c.Path() == "/api/test/authenticate" {
+				if strings.HasPrefix(c.Path(), "/api/auth") {
 					return true
 				}
 				return false
@@ -28,11 +32,13 @@ func ApplyMiddleware(e *echo.Echo) {
 		},
 	}))
 
+	// Checks for token in url param for email confirmation and password reset endpoints
 	e.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey:  auth.GetKey(),
 		TokenLookup: "query:token",
 		Skipper: func(c echo.Context) bool {
-			if strings.HasPrefix(c.Path(), "/api/register/confirmation") {
+			if strings.HasPrefix(c.Path(), "/api/auth/confirmation") ||
+				strings.HasPrefix(c.Path(), "/api/auth/passwordreset") {
 				return false
 			}
 			return true
