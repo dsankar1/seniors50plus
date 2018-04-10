@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -18,7 +19,7 @@ type DatabaseConnection struct {
 
 func NewDatabaseConnection() *DatabaseConnection {
 	user := "capstoneuser"
-	password := "capst0ne18project!" //os.Getenv("DB_PASSWORD")
+	password := os.Getenv("DB_PASSWORD")
 	endpoint := "capstone.cczajq2nppkf.us-east-2.rds.amazonaws.com"
 	databaseName := "roommates40plus"
 	return &DatabaseConnection{
