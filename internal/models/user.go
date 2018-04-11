@@ -10,12 +10,12 @@ const (
 
 type User struct {
 	Email            string `json:"email"`
-	Firstname        string `json:"firstname"`
-	Lastname         string `json:"lastname"`
-	Gender           string `json:"gender"`
-	Birthdate        string `json:"birthdate"`
+	Firstname        string `json:"firstname" validate:"required"`
+	Lastname         string `json:"lastname" validate:"required"`
+	Gender           string `json:"gender" validate:"required"`
+	Birthdate        string `json:"birthdate" validate:"required"`
 	AdminLevel       string `json:"adminLevel"`
-	About            string `json:"about"`
+	About            string `json:"about" validate:"required"`
 	Tags             []Tag  `json:"tags"`
 	ProfileImageUrl  string `json:"profileImageUrl"`
 	Active           bool   `json:"active"`
@@ -25,5 +25,5 @@ type User struct {
 
 type Tag struct {
 	Id      uint   `json:"id"`
-	Content string `json:"content"`
+	Content string `json:"content" validate:"required"`
 }

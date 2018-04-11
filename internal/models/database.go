@@ -30,10 +30,42 @@ func NewDatabaseConnection() *DatabaseConnection {
 	}
 }
 
+func (dbc *DatabaseConnection) UserExists(email string) (bool, error) {
+	existsQuery := "select exists(select * from users where email=? limit 1);"
+	if results, err := dbc.ExecuteQuery(existsQuery, email); err != nil {
+		return false, err
+	} else {
+		defer results.Close()
+		results.Next()
+		var exists bool
+		if err = results.Scan(&exists); err != nil {
+			return false, err
+		}
+		return exists, nil
+	}
+}
+
+func (dbc *DatabaseConnection) IsActive(email string) (bool, error) {
+	activeQuery := "select active from users where email=?"
+	if results, err := dbc.ExecuteQuery(activeQuery, email); err != nil {
+		return false, err
+	} else {
+		defer results.Close()
+		if results.Next() {
+			var active bool
+			if err = results.Scan(&active); err != nil {
+				return false, err
+			}
+			return active, nil
+		} else {
+			return false, errors.New("Account doesn't exist")
+		}
+	}
+}
+
 func (dbc *DatabaseConnection) CreateUser(user *User) error {
-	insertQuery := fmt.Sprintf(`insert into users (email, first_name, last_name, gender, birthdate, admin_level, password, registration_date)
-		values ('%v','%v','%v','%v','%v','%v','%v','%v')`, user.Email, user.Firstname, user.Lastname, user.Gender, user.Birthdate, user.AdminLevel, user.PasswordHash, user.RegistrationDate)
-	if results, err := dbc.ExecuteQuery(insertQuery); err != nil {
+	insertQuery := "insert into users (email, first_name, last_name, gender, birthdate, admin_level, password, registration_date) values (?,?,?,?,?,?,?,?)"
+	if results, err := dbc.ExecuteQuery(insertQuery, user.Email, user.Firstname, user.Lastname, user.Gender, user.Birthdate, user.AdminLevel, user.PasswordHash, user.RegistrationDate); err != nil {
 		if strings.Contains(err.Error(), "Error 1062:") {
 			return errors.New("Email already used")
 		}
@@ -44,9 +76,20 @@ func (dbc *DatabaseConnection) CreateUser(user *User) error {
 	}
 }
 
+func (dbc *DatabaseConnection) EditUser(user *User) (*User, error) {
+	editQuery := "update users set first_name=?, last_name=?, gender=?, birthdate=?, about=? where email=?"
+	if _, err := dbc.ExecuteQuery(editQuery, user.Firstname, user.Lastname, user.Gender, user.Birthdate, user.About, user.Email); err != nil {
+		return nil, err
+	}
+	if err := dbc.SetTags(user.Email, user.Tags); err != nil {
+		return nil, err
+	}
+	return dbc.GetUser(user.Email)
+}
+
 func (dbc *DatabaseConnection) GetUser(email string) (*User, error) {
-	userQuery := fmt.Sprintf("select * from users where email='%v'", email)
-	if results, err := dbc.ExecuteQuery(userQuery); err != nil {
+	userQuery := "select * from users where email=?"
+	if results, err := dbc.ExecuteQuery(userQuery, email); err != nil {
 		return nil, err
 	} else {
 		defer results.Close()
@@ -81,8 +124,8 @@ func (dbc *DatabaseConnection) GetUser(email string) (*User, error) {
 
 func (dbc *DatabaseConnection) GetTags(email string) ([]Tag, error) {
 	var tags []Tag
-	tagsQuery := fmt.Sprintf("select id, content from tags where email='%v'", email)
-	if results, err := dbc.ExecuteQuery(tagsQuery); err != nil {
+	tagsQuery := "select id, content from tags where email=?"
+	if results, err := dbc.ExecuteQuery(tagsQuery, email); err != nil {
 		return nil, err
 	} else {
 		defer results.Close()
@@ -97,35 +140,38 @@ func (dbc *DatabaseConnection) GetTags(email string) ([]Tag, error) {
 	}
 }
 
-func (dbc *DatabaseConnection) ExecuteQuery(query string) (*sql.Rows, error) {
-	//db, err := sql.Open("mysql", "capstoneuser:capst0ne18project!@tcp(capstone.cczajq2nppkf.us-east-2.rds.amazonaws.com)/roommates40plus")
+func (dbc *DatabaseConnection) SetTags(email string, tags []Tag) error {
+	deletionQuery := "delete from tags where email=?"
+	if _, err := dbc.ExecuteQuery(deletionQuery, email); err != nil {
+		return err
+	}
+	if len(tags) > 0 {
+		insertQuery := "insert into tags (email, content) values "
+		var tagContent []interface{}
+		for _, tag := range tags {
+			tagContent = append(tagContent, tag.Content)
+			insertQuery += fmt.Sprintf("('%v',?),", email)
+		}
+		insertQuery = strings.TrimSuffix(insertQuery, ",")
+		if _, err := dbc.ExecuteQuery(insertQuery, tagContent...); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (dbc *DatabaseConnection) ExecuteQuery(query string, args ...interface{}) (*sql.Rows, error) {
 	dbstring := fmt.Sprintf("%v:%v@tcp(%v)/%v", dbc.User, dbc.Password, dbc.Endpoint, dbc.DatabaseName)
 	db, err := sql.Open("mysql", dbstring)
+
 	if err != nil {
 		return nil, err
 	}
 	defer db.Close()
 
-	results, err := db.Query(query)
+	results, err := db.Query(query, args...)
 	if err != nil {
 		return nil, err
 	}
 	return results, nil
-}
-
-// Make sure columns match up with user fields
-func MapUserToTable(results *sql.Rows, user *User) error {
-	return results.Scan(
-		&user.Email,
-		&user.Firstname,
-		&user.Lastname,
-		&user.AdminLevel,
-		&user.About,
-		&user.ProfileImageUrl,
-		&user.PasswordHash,
-		&user.Gender,
-		&user.Birthdate,
-		&user.RegistrationDate,
-		&user.Active,
-	)
 }
