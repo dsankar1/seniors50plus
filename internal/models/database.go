@@ -1,11 +1,10 @@
 package models
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 	"os"
-	"strings"
+
+	"github.com/jinzhu/gorm"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -17,7 +16,15 @@ type DatabaseConnection struct {
 	DatabaseName string
 }
 
-func NewDatabaseConnection() *DatabaseConnection {
+func NewDatabaseConnection() (*gorm.DB, error) {
+	dbstring := fmt.Sprintf("%v:%v@tcp(%v)/%v", "capstoneuser",
+		os.Getenv("DB_PASSWORD"),
+		"capstone.cczajq2nppkf.us-east-2.rds.amazonaws.com",
+		"roommates40plus")
+	return gorm.Open("mysql", dbstring)
+}
+
+/*func NewDatabaseConnection() *DatabaseConnection {
 	user := "capstoneuser"
 	password := os.Getenv("DB_PASSWORD")
 	endpoint := "capstone.cczajq2nppkf.us-east-2.rds.amazonaws.com"
@@ -122,6 +129,64 @@ func (dbc *DatabaseConnection) GetUser(email string) (*User, error) {
 	}
 }
 
+func (dbc *DatabaseConnection) PostOffer(offer *RoommateOffer) error {
+	query := `insert into roommate_offers (posted_by, gender_requirement, pre_chosen_property, state,
+		city, zip, budget, pets_allowed, smoking_allowed, target_occupant_count, property_type) values
+		(?,?,?,?,?,?,?,?,?,?,?)`
+	if _, err := dbc.ExecuteQuery(query,
+		offer.PostedBy,
+		offer.GenderRequirement,
+		offer.PreChosenProperty,
+		offer.State,
+		offer.City,
+		offer.Zip,
+		offer.Budget,
+		offer.PetsAllowed,
+		offer.SmokingAllowed,
+		offer.TargetOccupantCount,
+		offer.PropertyType,
+	); err != nil {
+		return err
+	}
+}
+
+/*func (dbc *DatabaseConnection) GetOffer(email string) (*RoommateOffer, error) {
+	var offer RoommateOffer
+	offerQuery := "select * from roommate_offers where posted_by=?"
+	if results, err := dbc.ExecuteQuery(offerQuery, email); err != nil {
+		return nil, err
+	} else {
+		defer results.Close()
+		if results.Next() {
+			if err := results.Scan(
+				&offer.Id,
+				&offer.PostedBy,
+				&offer.GenderRequirement,
+				&offer.PreChosenProperty,
+				&offer.State,
+				&offer.City,
+				&offer.Zip,
+				&offer.Budget,
+				&offer.PetsAllowed,
+				&offer.SmokingAllowed,
+				&offer.TargetOccupantCount,
+				&offer.PropertyImageUrl,
+				&offer.PostedOn,
+				&offer.PropertyType,
+			); err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, nil
+		}
+	}
+
+}
+
+func (dbc *DatabaseConnection) GetOccupants(offerId uint) ([]Occupant, error) {
+	query := "select"
+}
+
 func (dbc *DatabaseConnection) GetTags(email string) ([]Tag, error) {
 	var tags []Tag
 	tagsQuery := "select id, content from tags where email=?"
@@ -174,4 +239,4 @@ func (dbc *DatabaseConnection) ExecuteQuery(query string, args ...interface{}) (
 		return nil, err
 	}
 	return results, nil
-}
+}*/

@@ -17,4 +17,6 @@ func RegisterHandlers(e *echo.Echo) {
 
 	e.PUT("/api/user/modify", user.ModifyUserHandler)
 
+	//e.POST("/api/test/")
+
 }

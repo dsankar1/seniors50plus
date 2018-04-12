@@ -1,24 +1,40 @@
 package models
 
+const (
+	PropertyTypeHouse     = "house"
+	PropertyTypeApartment = "apartment"
+)
+
 type RoommateOffer struct {
-	Id                  uint64   `json:"id"`
-	PostedBy            string   `json:"postedBy"`
-	GenderRequirement   string   `json:"genderRequirement"`
-	PreChosenProperty   bool     `json:"preChosenProperty"`
-	State               string   `json:"state"`
-	City                string   `json:"city"`
-	Zip                 uint     `json:"zip"`
-	BudgetMax           float32  `json:"budgetMax"`
-	BudgetMin           float32  `json:"budgetMin"`
-	PetsAllowed         bool     `json:"petsAllowed"`
-	SmokingAllowed      bool     `json:"smokingAllowed"`
-	Occupants           []string `json:"occupants"`
-	TargetOccupantCount uint     `json:"targetOccupantCount"`
-	PropertyImageUrl    string   `json:"propertyImageUrl"`
-	Active              bool     `json:"active"`
+	Id                  uint            `json:"id"`
+	PostedBy            string          `json:"postedBy"`
+	GenderRequirement   string          `json:"genderRequirement" validate:"required"`
+	PreChosenProperty   bool            `json:"preChosenProperty" validate:"required"`
+	State               string          `json:"state" validate:"required"`
+	City                string          `json:"city" validate:"required"`
+	Zip                 uint            `json:"zip" validate:"required"`
+	Budget              float32         `json:"budget" validate:"required"`
+	PetsAllowed         bool            `json:"petsAllowed" validate:"required"`
+	SmokingAllowed      bool            `json:"smokingAllowed" validate:"required"`
+	TargetOccupantCount uint            `json:"targetOccupantCount" validate:"required"`
+	PropertyImageUrl    string          `json:"propertyImageUrl"`
+	PostedOn            string          `json:"postedOn"`
+	PropertyType        string          `json:"propertyType" validate:"required"`
+	Occupants           []Occupant      `json:"occupants"`
+	Requests            []OthersRequest `json:"requests"`
 }
 
-var ExampleOffer = RoommateOffer{
+type Occupant struct {
+	Id              uint   `json:"id"`
+	Email           string `json:"email"`
+	Firstname       string `json:"firstname"`
+	Lastname        string `json:"lastname"`
+	Gender          string `json:"gender"`
+	ProfileImageUrl string `json:"profileImageUrl"`
+	AcceptedOn      string `json:"acceptedOn"`
+}
+
+/*var ExampleOffer = RoommateOffer{
 	GenderRequirement:   GenderMale,
 	PreChosenProperty:   false,
 	State:               "Georgia",
@@ -30,5 +46,4 @@ var ExampleOffer = RoommateOffer{
 	SmokingAllowed:      false,
 	TargetOccupantCount: 2,
 	PropertyImageUrl:    "https://someamazonbucket.com",
-	Active:              true,
-}
+}*/
