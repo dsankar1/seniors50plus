@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"seniors50plus/internal/email"
 	"seniors50plus/internal/models"
@@ -18,9 +17,9 @@ func EmailConfirmationHandler(c echo.Context) error {
 		claims := token.Claims.(jwt.MapClaims)
 		email := claims["email"]
 
-		query := fmt.Sprintf("update users set active=true where email='%v';", email)
+		query := "update users set active=true where email=?"
 		dbc := models.NewDatabaseConnection()
-		if _, err := dbc.ExecuteQuery(query); err != nil {
+		if _, err := dbc.ExecuteQuery(query, email); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		return c.Redirect(http.StatusPermanentRedirect, "/home")
