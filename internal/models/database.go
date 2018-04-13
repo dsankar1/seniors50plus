@@ -1,8 +1,10 @@
 package models
 
 import (
+	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/jinzhu/gorm"
 
@@ -10,18 +12,73 @@ import (
 )
 
 type DatabaseConnection struct {
-	User         string
-	Password     string
-	Endpoint     string
-	DatabaseName string
+	dbstring string
 }
 
-func NewDatabaseConnection() (*gorm.DB, error) {
-	dbstring := fmt.Sprintf("%v:%v@tcp(%v)/%v", "capstoneuser",
+func NewDatabaseConnection() *DatabaseConnection {
+	dbstring := fmt.Sprintf(
+		"%v:%v@tcp(%v)/%v", "capstoneuser",
 		os.Getenv("DB_PASSWORD"),
 		"capstone.cczajq2nppkf.us-east-2.rds.amazonaws.com",
-		"roommates40plus")
-	return gorm.Open("mysql", dbstring)
+		"roommates40plusv2?charset=utf8&parseTime=true",
+	)
+	return &DatabaseConnection{dbstring}
+}
+
+func (dbc *DatabaseConnection) CreateUser(user *User) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		if err := db.Create(user).Error; err != nil {
+			if strings.Contains(err.Error(), "Error 1062:") {
+				user = nil
+				return errors.New("Email is already being used")
+			}
+			return err
+		}
+		return nil
+	}
+}
+
+func (dbc *DatabaseConnection) UpdateUser(user *User) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		tag := Tag{Owner: user.Email}
+		if err := db.Delete(&tag).Error; err != nil {
+			return err
+		}
+		if err := db.Save(user).Error; err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func (dbc *DatabaseConnection) QueryUser(user *User) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		if err := db.First(user).Error; err != nil {
+			return errors.New("Email not recognized")
+		}
+		return nil
+	}
+}
+
+func (dbc *DatabaseConnection) AttachTags(user *User) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		if err := db.Where("owner = ?", user.Email).Find(&user.Tags).Error; err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
 /*func NewDatabaseConnection() *DatabaseConnection {
