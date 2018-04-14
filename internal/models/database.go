@@ -81,6 +81,66 @@ func (dbc *DatabaseConnection) AttachTags(user *User) error {
 	}
 }
 
+func (dbc *DatabaseConnection) QueryOffers(offer *RoommateOffer) ([]RoommateOffer, error) {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return nil, err
+	} else {
+		defer db.Close()
+		var offers []RoommateOffer
+		if err := db.Where(offer).Find(&offers).Error; err != nil {
+			return nil, err
+		}
+		for i := 0; i < len(offers); i++ {
+			offers[i].PostedBy.Email = offer.PosterEmail
+			if err := dbc.QueryUser(&offers[i].PostedBy); err != nil {
+				return nil, err
+			}
+			if err := dbc.AttachResidents(&offers[i]); err != nil {
+				return nil, err
+			}
+		}
+		return offers, nil
+	}
+}
+
+func (dbc *DatabaseConnection) QueryOffer(offer *RoommateOffer) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		if err := db.Where("poster_email = ?", offer.PosterEmail).First(offer).Error; err != nil {
+			return err
+		}
+		offer.PostedBy.Email = offer.PosterEmail
+		if err := dbc.QueryUser(&offer.PostedBy); err != nil {
+			return err
+		}
+		if err := dbc.AttachResidents(offer); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func (dbc *DatabaseConnection) AttachResidents(offer *RoommateOffer) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		if err := db.Where("offer_id = ?", offer.ID).Find(&offer.Residents).Error; err != nil {
+			return err
+		}
+		for i := 0; i < len(offer.Residents); i++ {
+			res := &offer.Residents[i]
+			res.Occupant.Email = res.OccupantEmail
+			if err := dbc.QueryUser(&res.Occupant); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
 /*func NewDatabaseConnection() *DatabaseConnection {
 	user := "capstoneuser"
 	password := os.Getenv("DB_PASSWORD")
