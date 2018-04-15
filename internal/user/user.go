@@ -2,8 +2,10 @@ package user
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"seniors50plus/internal/models"
+	"strconv"
 	"time"
 	"unicode"
 
@@ -13,30 +15,75 @@ import (
 
 const requiredAge = 40
 
-func ModifyUserHandler(c echo.Context) error {
-	if token, ok := c.Get("user").(*jwt.Token); ok {
-		email := token.Claims.(jwt.MapClaims)["email"].(string)
+func GetUserHandler(c echo.Context) error {
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	user := models.User{
+		ID: uint(userId),
+	}
+	dbc := models.NewDatabaseConnection()
+	if err := dbc.GetUser(&user); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if err := dbc.AttachTags(&user); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	user.Email = ""
+	return c.JSON(http.StatusOK, user)
+}
+
+func GetUserListHandler(c echo.Context) error {
+	var list []struct {
+		ID uint `json:"id" validate:"required"`
+	}
+	if err := c.Bind(&list); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	var users []models.User
+	for i, listItem := range list {
+		if listItem.ID == 0 {
+			continue
+		}
+		user := models.User{
+			ID: listItem.ID,
+		}
 		dbc := models.NewDatabaseConnection()
-		user := models.User{Email: email}
-		if err := dbc.QueryUser(&user); err != nil {
+		if err := dbc.GetUser(&user); err != nil {
+			errAppend := fmt.Sprintf(" with id=%v (index %v)", listItem.ID, i)
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error()+errAppend)
+		}
+		user.Email = ""
+		users = append(users, user)
+	}
+	return c.JSON(http.StatusOK, users)
+}
+
+func UpdateUserHandler(c echo.Context) error {
+	if token, ok := c.Get("user").(*jwt.Token); ok {
+		userId := uint(token.Claims.(jwt.MapClaims)["id"].(float64))
+		user := models.User{ID: userId}
+		dbc := models.NewDatabaseConnection()
+		if err := dbc.GetUser(&user); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		if user.Active == false {
 			return echo.NewHTTPError(http.StatusBadRequest, "Account not activated")
 		}
-		var req models.User
-		if err := c.Bind(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Empty request body")
+		var update models.User
+		if err := c.Bind(&update); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		if err := c.Validate(&req); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest, "Missing/Invalid fields")
+		if err := c.Validate(&update); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		user.Firstname = req.Firstname
-		user.Lastname = req.Lastname
-		user.Gender = req.Gender
-		user.Birthdate = req.Birthdate
-		user.About = req.About
-		user.Tags = req.Tags
+		user.Firstname = update.Firstname
+		user.Lastname = update.Lastname
+		user.Gender = update.Gender
+		user.Birthdate = update.Birthdate
+		user.About = update.About
+		user.Tags = update.Tags
 
 		if err := validateUpdate(&user); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())

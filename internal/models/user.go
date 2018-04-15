@@ -13,24 +13,27 @@ const (
 )
 
 type User struct {
-	Email           string    `json:"email" gorm:"primary_key"`
-	Firstname       string    `json:"firstname" validate:"required" gorm:"not null"`
-	Lastname        string    `json:"lastname" validate:"required" gorm:"not null"`
-	Gender          string    `json:"gender" validate:"required" gorm:"type:enum('male','female'); not null"`
-	Birthdate       string    `json:"birthdate" validate:"required" gorm:"type:date; not null"`
-	AdminLevel      string    `json:"adminLevel" gorm:"type:enum('user','moderator','susan'); default:'user'"`
-	About           string    `json:"about" gorm:"type:varchar(3000); default:''"`
-	ProfileImageUrl string    `json:"profileImageUrl" gorm:"default:''"`
-	Active          bool      `json:"-" gorm:"default:false"`
-	PasswordHash    string    `json:"-" gorm:"not null"`
-	CreatedAt       time.Time `json:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt"`
-	Tags            []Tag     `json:"tags" gorm:"foreignkey:Owner"`
+	ID              uint
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	Email           string                 `gorm:"unique; not null"`
+	Firstname       string                 `validate:"required" gorm:"not null"`
+	Lastname        string                 `validate:"required" gorm:"not null"`
+	Gender          string                 `validate:"required" gorm:"type:enum('male','female'); not null"`
+	Birthdate       string                 `validate:"required" gorm:"type:date; not null"`
+	AdminLevel      string                 `gorm:"type:enum('user','moderator','susan'); not null; default:'user'"`
+	About           string                 `validate:"required" gorm:"type:varchar(3000); not null"`
+	ProfileImageUrl string                 `gorm:"not null"`
+	Active          bool                   `json:"-" gorm:"not null; default:false"`
+	PasswordHash    string                 `json:"-" gorm:"not null"`
+	Tags            []Tag                  `validate:"required" gorm:"foreignkey:UserID"`
+	Invitations     []Resident             `gorm:"foreignkey:UserID"`
+	Requests        []CommunicationRequest `gorm:"foreignkey:UserID"`
 }
 
 type Tag struct {
-	Id        uint      `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	Owner     string    `json:"-"`
-	Content   string    `json:"content" validate:"required"`
+	ID        uint
+	CreatedAt time.Time
+	UserID    uint   `gorm:"not null"`
+	Content   string `validate:"required" gorm:"not null"`
 }

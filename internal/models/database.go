@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/jinzhu/gorm"
 
@@ -25,19 +24,31 @@ func NewDatabaseConnection() *DatabaseConnection {
 	return &DatabaseConnection{dbstring}
 }
 
+func (dbc *DatabaseConnection) CreateTable(models ...interface{}) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.CreateTable(models...).Error
+	}
+}
+
+// User related DB methods
 func (dbc *DatabaseConnection) CreateUser(user *User) error {
 	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
 		return err
 	} else {
 		defer db.Close()
-		if err := db.Create(user).Error; err != nil {
-			if strings.Contains(err.Error(), "Error 1062:") {
-				user = nil
-				return errors.New("Email is already being used")
-			}
-			return err
-		}
-		return nil
+		return db.Create(user).Error
+	}
+}
+
+func (dbc *DatabaseConnection) GetUser(user *User) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Where(user).First(user).Error
 	}
 }
 
@@ -46,24 +57,17 @@ func (dbc *DatabaseConnection) UpdateUser(user *User) error {
 		return err
 	} else {
 		defer db.Close()
-		tag := Tag{Owner: user.Email}
-		if err := db.Delete(&tag).Error; err != nil {
-			return err
-		}
 		if err := db.Save(user).Error; err != nil {
 			return err
 		}
-		return nil
-	}
-}
-
-func (dbc *DatabaseConnection) QueryUser(user *User) error {
-	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
-		return err
-	} else {
-		defer db.Close()
-		if err := db.First(user).Error; err != nil {
-			return errors.New("Email not recognized")
+		if err := db.Where("user_id = ?", user.ID).Delete(&Tag{}).Error; err != nil {
+			return err
+		}
+		for i := 0; i < len(user.Tags); i++ {
+			user.Tags[i].UserID = user.ID
+			if err := db.Save(&user.Tags[i]).Error; err != nil {
+				return err
+			}
 		}
 		return nil
 	}
@@ -74,51 +78,41 @@ func (dbc *DatabaseConnection) AttachTags(user *User) error {
 		return err
 	} else {
 		defer db.Close()
-		if err := db.Where("owner = ?", user.Email).Find(&user.Tags).Error; err != nil {
-			return err
-		}
-		return nil
+		return db.Where("user_id = ?", user.ID).Find(&user.Tags).Error
 	}
 }
 
-func (dbc *DatabaseConnection) QueryOffers(offer *RoommateOffer) ([]RoommateOffer, error) {
-	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
-		return nil, err
-	} else {
-		defer db.Close()
-		var offers []RoommateOffer
-		if err := db.Where(offer).Find(&offers).Error; err != nil {
-			return nil, err
-		}
-		for i := 0; i < len(offers); i++ {
-			offers[i].PostedBy.Email = offer.PosterEmail
-			if err := dbc.QueryUser(&offers[i].PostedBy); err != nil {
-				return nil, err
-			}
-			if err := dbc.AttachResidents(&offers[i]); err != nil {
-				return nil, err
-			}
-		}
-		return offers, nil
-	}
-}
-
-func (dbc *DatabaseConnection) QueryOffer(offer *RoommateOffer) error {
+// Offer related DB methods
+func (dbc *DatabaseConnection) CreateOffer(offer *RoommateOffer) error {
 	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
 		return err
 	} else {
 		defer db.Close()
-		if err := db.Where("poster_email = ?", offer.PosterEmail).First(offer).Error; err != nil {
-			return err
+		if results := db.Where(offer).First(&RoommateOffer{}); results.Error != nil {
+			if results.RecordNotFound() {
+				return db.Create(offer).Error
+			}
+			return results.Error
 		}
-		offer.PostedBy.Email = offer.PosterEmail
-		if err := dbc.QueryUser(&offer.PostedBy); err != nil {
-			return err
-		}
-		if err := dbc.AttachResidents(offer); err != nil {
-			return err
-		}
-		return nil
+		return errors.New("Offer already exists")
+	}
+}
+
+func (dbc *DatabaseConnection) DeleteOffer(offer *RoommateOffer) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Delete(offer).Error
+	}
+}
+
+func (dbc *DatabaseConnection) GetOffer(offer *RoommateOffer) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Where(offer).First(offer).Error
 	}
 }
 
@@ -127,233 +121,73 @@ func (dbc *DatabaseConnection) AttachResidents(offer *RoommateOffer) error {
 		return err
 	} else {
 		defer db.Close()
-		if err := db.Where("offer_id = ?", offer.ID).Find(&offer.Residents).Error; err != nil {
+		return db.Where("offer_id = ?", offer.ID).Find(&offer.Residents).Error
+	}
+}
+
+func (dbc *DatabaseConnection) AttachRequests(offer *RoommateOffer) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Where("offer_id = ?", offer.ID).Find(&offer.Requests).Error
+	}
+}
+
+// Communication request related db methods
+func (dbc *DatabaseConnection) GetCommunicationRequest(request *Request) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Table("communication_requests").Where(request).First(request).Error
+	}
+}
+
+func (dbc *DatabaseConnection) CreateCommunicationRequest(request *Request) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		offer := RoommateOffer{
+			ID: request.OfferID,
+		}
+		if err := dbc.GetOffer(&offer); err != nil {
 			return err
 		}
-		for i := 0; i < len(offer.Residents); i++ {
-			res := &offer.Residents[i]
-			res.Occupant.Email = res.OccupantEmail
-			if err := dbc.QueryUser(&res.Occupant); err != nil {
-				return err
+		if offer.UploaderID == request.UserID {
+			return errors.New("You can't request your own post")
+		}
+		if results := db.Table("communication_requests").Where(request).First(&Request{}); results.Error != nil {
+			if results.RecordNotFound() {
+				return db.Table("communication_requests").Create(request).Error
 			}
+			return results.Error
 		}
-		return nil
+		return errors.New("Request already exists")
 	}
 }
 
-/*func NewDatabaseConnection() *DatabaseConnection {
-	user := "capstoneuser"
-	password := os.Getenv("DB_PASSWORD")
-	endpoint := "capstone.cczajq2nppkf.us-east-2.rds.amazonaws.com"
-	databaseName := "roommates40plus"
-	return &DatabaseConnection{
-		User:         user,
-		Password:     password,
-		Endpoint:     endpoint,
-		DatabaseName: databaseName,
-	}
-}
-
-func (dbc *DatabaseConnection) UserExists(email string) (bool, error) {
-	existsQuery := "select exists(select * from users where email=? limit 1);"
-	if results, err := dbc.ExecuteQuery(existsQuery, email); err != nil {
-		return false, err
-	} else {
-		defer results.Close()
-		results.Next()
-		var exists bool
-		if err = results.Scan(&exists); err != nil {
-			return false, err
-		}
-		return exists, nil
-	}
-}
-
-func (dbc *DatabaseConnection) IsActive(email string) (bool, error) {
-	activeQuery := "select active from users where email=?"
-	if results, err := dbc.ExecuteQuery(activeQuery, email); err != nil {
-		return false, err
-	} else {
-		defer results.Close()
-		if results.Next() {
-			var active bool
-			if err = results.Scan(&active); err != nil {
-				return false, err
-			}
-			return active, nil
-		} else {
-			return false, errors.New("Account doesn't exist")
-		}
-	}
-}
-
-func (dbc *DatabaseConnection) CreateUser(user *User) error {
-	insertQuery := "insert into users (email, first_name, last_name, gender, birthdate, admin_level, password, registration_date) values (?,?,?,?,?,?,?,?)"
-	if results, err := dbc.ExecuteQuery(insertQuery, user.Email, user.Firstname, user.Lastname, user.Gender, user.Birthdate, user.AdminLevel, user.PasswordHash, user.RegistrationDate); err != nil {
-		if strings.Contains(err.Error(), "Error 1062:") {
-			return errors.New("Email already used")
-		}
+func (dbc *DatabaseConnection) UpdateCommunicationRequest(request *Request) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
 		return err
 	} else {
-		defer results.Close()
-		return nil
+		defer db.Close()
+		return db.Table("communication_requests").Save(request).Error
 	}
 }
 
-func (dbc *DatabaseConnection) EditUser(user *User) (*User, error) {
-	editQuery := "update users set first_name=?, last_name=?, gender=?, birthdate=?, about=? where email=?"
-	if _, err := dbc.ExecuteQuery(editQuery, user.Firstname, user.Lastname, user.Gender, user.Birthdate, user.About, user.Email); err != nil {
-		return nil, err
-	}
-	if err := dbc.SetTags(user.Email, user.Tags); err != nil {
-		return nil, err
-	}
-	return dbc.GetUser(user.Email)
-}
-
-func (dbc *DatabaseConnection) GetUser(email string) (*User, error) {
-	userQuery := "select * from users where email=?"
-	if results, err := dbc.ExecuteQuery(userQuery, email); err != nil {
-		return nil, err
-	} else {
-		defer results.Close()
-		if results.Next() {
-			var user User
-			if err := results.Scan(
-				&user.Email,
-				&user.Firstname,
-				&user.Lastname,
-				&user.AdminLevel,
-				&user.About,
-				&user.ProfileImageUrl,
-				&user.PasswordHash,
-				&user.Gender,
-				&user.Birthdate,
-				&user.RegistrationDate,
-				&user.Active,
-			); err != nil {
-				return nil, err
-			}
-			if tags, err := dbc.GetTags(email); err != nil {
-				return nil, err
-			} else {
-				user.Tags = tags
-				return &user, nil
-			}
-		} else {
-			return nil, nil
-		}
-	}
-}
-
-func (dbc *DatabaseConnection) PostOffer(offer *RoommateOffer) error {
-	query := `insert into roommate_offers (posted_by, gender_requirement, pre_chosen_property, state,
-		city, zip, budget, pets_allowed, smoking_allowed, target_occupant_count, property_type) values
-		(?,?,?,?,?,?,?,?,?,?,?)`
-	if _, err := dbc.ExecuteQuery(query,
-		offer.PostedBy,
-		offer.GenderRequirement,
-		offer.PreChosenProperty,
-		offer.State,
-		offer.City,
-		offer.Zip,
-		offer.Budget,
-		offer.PetsAllowed,
-		offer.SmokingAllowed,
-		offer.TargetOccupantCount,
-		offer.PropertyType,
-	); err != nil {
+func (dbc *DatabaseConnection) DeleteCommunicationRequest(request *Request) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
 		return err
-	}
-}
-
-/*func (dbc *DatabaseConnection) GetOffer(email string) (*RoommateOffer, error) {
-	var offer RoommateOffer
-	offerQuery := "select * from roommate_offers where posted_by=?"
-	if results, err := dbc.ExecuteQuery(offerQuery, email); err != nil {
-		return nil, err
 	} else {
-		defer results.Close()
-		if results.Next() {
-			if err := results.Scan(
-				&offer.Id,
-				&offer.PostedBy,
-				&offer.GenderRequirement,
-				&offer.PreChosenProperty,
-				&offer.State,
-				&offer.City,
-				&offer.Zip,
-				&offer.Budget,
-				&offer.PetsAllowed,
-				&offer.SmokingAllowed,
-				&offer.TargetOccupantCount,
-				&offer.PropertyImageUrl,
-				&offer.PostedOn,
-				&offer.PropertyType,
-			); err != nil {
-				return nil, err
-			}
-		} else {
-			return nil, nil
-		}
-	}
-
-}
-
-func (dbc *DatabaseConnection) GetOccupants(offerId uint) ([]Occupant, error) {
-	query := "select"
-}
-
-func (dbc *DatabaseConnection) GetTags(email string) ([]Tag, error) {
-	var tags []Tag
-	tagsQuery := "select id, content from tags where email=?"
-	if results, err := dbc.ExecuteQuery(tagsQuery, email); err != nil {
-		return nil, err
-	} else {
-		defer results.Close()
-		for results.Next() {
-			var tag Tag
-			if err := results.Scan(&tag.Id, &tag.Content); err != nil {
-				return nil, err
-			}
-			tags = append(tags, tag)
-		}
-		return tags, nil
-	}
-}
-
-func (dbc *DatabaseConnection) SetTags(email string, tags []Tag) error {
-	deletionQuery := "delete from tags where email=?"
-	if _, err := dbc.ExecuteQuery(deletionQuery, email); err != nil {
-		return err
-	}
-	if len(tags) > 0 {
-		insertQuery := "insert into tags (email, content) values "
-		var tagContent []interface{}
-		for _, tag := range tags {
-			tagContent = append(tagContent, tag.Content)
-			insertQuery += fmt.Sprintf("('%v',?),", email)
-		}
-		insertQuery = strings.TrimSuffix(insertQuery, ",")
-		if _, err := dbc.ExecuteQuery(insertQuery, tagContent...); err != nil {
+		defer db.Close()
+		if err := dbc.GetCommunicationRequest(request); err != nil {
 			return err
 		}
+		if request.Status == RequestStatusDenied {
+			return errors.New("Can't delete denied requests")
+		}
+		return db.Table("communication_requests").Delete(request).Error
 	}
-	return nil
 }
-
-func (dbc *DatabaseConnection) ExecuteQuery(query string, args ...interface{}) (*sql.Rows, error) {
-	dbstring := fmt.Sprintf("%v:%v@tcp(%v)/%v", dbc.User, dbc.Password, dbc.Endpoint, dbc.DatabaseName)
-	db, err := sql.Open("mysql", dbstring)
-
-	if err != nil {
-		return nil, err
-	}
-	defer db.Close()
-
-	results, err := db.Query(query, args...)
-	if err != nil {
-		return nil, err
-	}
-	return results, nil
-}*/

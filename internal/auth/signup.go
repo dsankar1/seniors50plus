@@ -12,13 +12,15 @@ import (
 
 func EmailConfirmationHandler(c echo.Context) error {
 	if token, ok := c.Get("user").(*jwt.Token); ok {
-		email := token.Claims.(jwt.MapClaims)["email"].(string)
-
+		userId := uint(token.Claims.(jwt.MapClaims)["id"].(float64))
 		dbc := models.NewDatabaseConnection()
 		user := models.User{
-			Email:  email,
-			Active: true,
+			ID: userId,
 		}
+		if err := dbc.GetUser(&user); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		user.Active = true
 		if err := dbc.UpdateUser(&user); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
@@ -31,10 +33,10 @@ func EmailConfirmationHandler(c echo.Context) error {
 func SignupHandler(c echo.Context) error {
 	var req models.SignupRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Empty request body")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if err := c.Validate(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Missing/Invalid fields")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if err := validateRequest(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -54,13 +56,13 @@ func SignupHandler(c echo.Context) error {
 	}
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["email"] = user.Email
+	claims["id"] = user.ID
 	claims["exp"] = time.Now().Add(time.Hour).Unix()
 	tokenString, _ := token.SignedString(GetKey())
-	tokenString = "https://roommates40plus.com/api/auth/confirmation?token=" + tokenString
+	tokenString = "https://roommates40plus.com/api/auth/signup/confirmation?token=" + tokenString
 
 	tmpInfo := models.TemplateInfo{
-		Firstname: req.Firstname,
+		Firstname: user.Firstname,
 		URL:       tokenString,
 	}
 
@@ -69,7 +71,7 @@ func SignupHandler(c echo.Context) error {
 		587,
 		"roommates40plus@gmail.com",
 		"capst0ne!40Plus",
-		[]string{req.Email},
+		[]string{user.Email},
 		"Registration Confirmation",
 		registrationTemplate,
 		tmpInfo,

@@ -1,28 +1,39 @@
 package models
 
+import "time"
+
 const (
 	RequestStatusPending  = "pending"
 	RequestStatusAccepted = "accepted"
 	RequestStatusDenied   = "denied"
 )
 
-type OthersRequest struct {
-	Id              uint   `json:"id"`
-	Email           string `json:"email"`
-	Firstname       string `json:"firstname"`
-	Lastname        string `json:"lastname"`
-	ProfileImageUrl string `json:"profileImageUrl"`
-	RequestedOn     string `json:"requestedOn"`
-	Status          string `json:"status"`
+type Request struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+	OfferID   uint   `gorm:"not null"`
+	UserID    uint   `validate:"required" gorm:"not null"`
+	Status    string `gorm:"type:enum('pending','accepted','denied'); not null; default:'pending'"`
 }
 
-type YourRequest struct {
-	Id               uint   `json:"id"`
-	OfferId          uint   `json:"offerId"`
-	PropertyImageUrl string `json:"propertyImageUrl"`
-	State            string `json:"State"`
-	City             string `json:"city"`
-	Zip              string `json:"zip"`
-	RequestedOn      string `json:"requestedOn"`
-	Status           string `json:"status"`
+type Resident struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+	OfferID   uint   `gorm:"not null"`
+	UserID    uint   `validate:"required" gorm:"not null"`
+	Status    string `gorm:"type:enum('pending','accepted','denied'); not null; default:'pending'"`
+}
+
+type CommunicationRequest struct {
+	ID        uint
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
+	UserID    uint   `gorm:"not null"`
+	OfferID   uint   `validate:"required" gorm:"not null"`
+	Status    string `gorm:"type:enum('pending','accepted','denied'); not null; default:'pending'"`
 }

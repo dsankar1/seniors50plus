@@ -37,7 +37,7 @@ func RegisterMiddleware(e *echo.Echo) {
 		SigningKey:  auth.GetKey(),
 		TokenLookup: "query:token",
 		Skipper: func(c echo.Context) bool {
-			if strings.HasPrefix(c.Path(), "/api/auth/confirmation") ||
+			if strings.HasPrefix(c.Path(), "/api/auth/signup/confirmation") ||
 				strings.HasPrefix(c.Path(), "/api/auth/passwordreset") {
 				return false
 			}

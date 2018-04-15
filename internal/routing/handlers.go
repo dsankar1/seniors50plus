@@ -2,6 +2,8 @@ package routing
 
 import (
 	"seniors50plus/internal/auth"
+	"seniors50plus/internal/offer"
+	"seniors50plus/internal/request"
 	"seniors50plus/internal/user"
 
 	"github.com/labstack/echo"
@@ -9,14 +11,34 @@ import (
 
 func RegisterHandlers(e *echo.Echo) {
 
+	// AUTH
 	e.POST("/api/auth/login", auth.LoginHandler)
 
 	e.POST("/api/auth/signup", auth.SignupHandler)
 
-	e.GET("/api/auth/confirmation", auth.EmailConfirmationHandler)
+	e.GET("/api/auth/signup/confirmation", auth.EmailConfirmationHandler)
 
-	e.PUT("/api/user/modify", user.ModifyUserHandler)
+	// USER
+	e.GET("/api/user/:id", user.GetUserHandler)
 
-	//e.POST("/api/test/")
+	e.POST("/api/user/list", user.GetUserListHandler)
+
+	e.PUT("/api/user", user.UpdateUserHandler)
+
+	// OFFERS
+	e.POST("/api/offer", offer.PostOfferHandler)
+
+	e.GET("/api/offer", offer.GetOfferHandler)
+
+	e.GET("/api/offer/:id", offer.GetOfferHandler)
+
+	e.DELETE("/api/offer", offer.DeleteOfferHandler)
+
+	// REQUESTS
+	e.GET("/api/offer/:id/request", request.CreateCommunicationRequestHandler)
+
+	e.DELETE("/api/offer/:id/request", request.DeleteCommunicationRequestHandler)
+
+	e.GET("/api/request/:id", request.RespondToCommunicationRequestHandler)
 
 }

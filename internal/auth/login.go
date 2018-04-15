@@ -12,19 +12,16 @@ import (
 func LoginHandler(c echo.Context) error {
 	var req models.LoginRequest
 	if err := c.Bind(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Empty request body")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if err := c.Validate(&req); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "Missing/Invalid fields")
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	dbc := models.NewDatabaseConnection()
 	user := models.User{
 		Email: req.Email,
 	}
-	if err := dbc.QueryUser(&user); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
-	if err := dbc.AttachTags(&user); err != nil {
+	dbc := models.NewDatabaseConnection()
+	if err := dbc.GetUser(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if CheckPasswordHash(req.Password, user.PasswordHash) == false {
@@ -33,9 +30,13 @@ func LoginHandler(c echo.Context) error {
 	if user.Active == false {
 		return echo.NewHTTPError(http.StatusBadRequest, "Account not activated")
 	}
+	if err := dbc.AttachTags(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	claims["email"] = req.Email
+	claims["id"] = user.ID
+	claims["email"] = user.Email
 	claims["admin"] = user.AdminLevel
 	claims["exp"] = time.Now().Add(time.Hour * 4).Unix()
 	tokenString, _ := token.SignedString(GetKey())
