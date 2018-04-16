@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"seniors50plus/internal/models"
+	"seniors50plus/internal/utils"
 	"strconv"
 	"time"
 	"unicode"
@@ -25,12 +26,36 @@ func GetUserHandler(c echo.Context) error {
 	}
 	dbc := models.NewDatabaseConnection()
 	if err := dbc.GetUser(&user); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if err := dbc.AttachTags(&user); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	user.Email = ""
+	return c.JSON(http.StatusOK, user)
+}
+
+func GetMyselfHandler(c echo.Context) error {
+	var tokenId uint
+	if err := utils.GetIdFromContext(c, &tokenId); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	user := models.User{
+		ID: tokenId,
+	}
+	dbc := models.NewDatabaseConnection()
+	if err := dbc.GetUser(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if err := dbc.AttachTags(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if err := dbc.AttachCommunicationRequests(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if err := dbc.AttachResidentInvitations(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 	return c.JSON(http.StatusOK, user)
 }
 

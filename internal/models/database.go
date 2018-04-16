@@ -91,6 +91,15 @@ func (dbc *DatabaseConnection) AttachCommunicationRequests(user *User) error {
 	}
 }
 
+func (dbc *DatabaseConnection) AttachResidentInvitations(user *User) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Table("residents").Where("user_id = ?", user.ID).Find(&user.Invitations).Error
+	}
+}
+
 // Offer related DB methods
 func (dbc *DatabaseConnection) CreateOffer(offer *RoommateOffer) error {
 	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
@@ -104,32 +113,6 @@ func (dbc *DatabaseConnection) CreateOffer(offer *RoommateOffer) error {
 			return results.Error
 		}
 		return errors.New("Offer already exists")
-	}
-}
-
-func (dbc *DatabaseConnection) DecrementOffer(offer *RoommateOffer) error {
-	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
-		return err
-	} else {
-		defer db.Close()
-		if err := db.Where(offer).First(offer).Error; err != nil {
-			return err
-		}
-		offer.AcceptedResidentCount--
-		return db.Save(offer).Error
-	}
-}
-
-func (dbc *DatabaseConnection) IncrementOffer(offer *RoommateOffer) error {
-	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
-		return err
-	} else {
-		defer db.Close()
-		if err := db.Where(offer).First(offer).Error; err != nil {
-			return err
-		}
-		offer.AcceptedResidentCount++
-		return db.Save(offer).Error
 	}
 }
 
@@ -160,6 +143,15 @@ func (dbc *DatabaseConnection) DeleteOffer(offer *RoommateOffer) error {
 		return err
 	} else {
 		defer db.Close()
+		if err := db.Where(offer).First(offer).Error; err != nil {
+			return err
+		}
+		if err := db.Table("communication_requests").Where("offer_id like ?", offer.ID).Delete(Request{}).Error; err != nil {
+			return err
+		}
+		if err := db.Table("residents").Where("offer_id like ?", offer.ID).Delete(Request{}).Error; err != nil {
+			return err
+		}
 		return db.Delete(offer).Error
 	}
 }
@@ -230,12 +222,12 @@ func (dbc *DatabaseConnection) DeleteCommunicationRequest(request *Request) erro
 		return err
 	} else {
 		defer db.Close()
-		if err := dbc.GetCommunicationRequest(request); err != nil {
+		/*if err := dbc.GetCommunicationRequest(request); err != nil {
 			return err
 		}
 		if request.Status == RequestStatusDenied {
 			return errors.New("Can't delete denied requests")
-		}
+		}*/
 		return db.Table("communication_requests").Delete(request).Error
 	}
 }
@@ -279,12 +271,12 @@ func (dbc *DatabaseConnection) DeleteResidentRequest(request *Request) error {
 		return err
 	} else {
 		defer db.Close()
-		if err := dbc.GetResidentRequest(request); err != nil {
+		/*if err := dbc.GetResidentRequest(request); err != nil {
 			return err
 		}
 		if request.Status == RequestStatusDenied {
 			return errors.New("Can't delete denied requests")
-		}
+		}*/
 		return db.Table("residents").Delete(request).Error
 	}
 }

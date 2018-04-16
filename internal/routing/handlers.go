@@ -23,16 +23,18 @@ func RegisterHandlers(e *echo.Echo) {
 
 	e.POST("/api/user/list", user.GetUserListHandler)
 
+	e.GET("/api/user", user.GetMyselfHandler)
+
 	e.PUT("/api/user", user.UpdateUserHandler)
 
 	// OFFERS
 	e.POST("/api/offer", offer.PostOfferHandler)
 
-	e.GET("/api/offer", offer.GetOfferHandler)
+	e.GET("/api/offer", offer.GetMyOfferHandler)
 
 	e.GET("/api/offer/:id", offer.GetOfferHandler)
 
-	e.DELETE("/api/offer", offer.DeleteOfferHandler)
+	e.DELETE("/api/offer", offer.DeleteMyOfferHandler)
 
 	// COMMUNICATION REQUESTS
 	e.POST("/api/offer/:id/request", request.CreateCommunicationRequestHandler)

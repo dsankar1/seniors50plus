@@ -3,124 +3,127 @@ package request
 import (
 	"net/http"
 	"seniors50plus/internal/models"
+	"seniors50plus/internal/utils"
 	"strconv"
+	"strings"
 
-	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
 
 func CreateResidentRequestHandler(c echo.Context) error {
-	if token, ok := c.Get("user").(*jwt.Token); ok {
-		myId := uint(token.Claims.(jwt.MapClaims)["id"].(float64))
-		userId, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		if myId == uint(userId) {
-			return echo.NewHTTPError(http.StatusBadRequest, "Attempted to request yourself")
-		}
-		offer := models.RoommateOffer{
-			UploaderID: myId,
-		}
-		dbc := models.NewDatabaseConnection()
-		if err := dbc.GetOffer(&offer); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		if offer.AcceptedResidentCount == offer.TargetResidentCount {
-			return echo.NewHTTPError(http.StatusBadRequest, "Offer is already full")
-		}
-		request := models.Request{
-			UserID:  uint(userId),
-			OfferID: offer.ID,
-		}
-		if err := dbc.CreateResidentRequest(&request); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		return c.JSON(http.StatusOK, request)
-	} else {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Token type assertion failed?")
+	var tokenId uint
+	if err := utils.GetIdFromContext(c, &tokenId); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID")
+	}
+	if uint(userId) == tokenId {
+		return echo.NewHTTPError(http.StatusBadRequest, "User ID matches token ID")
+	}
+	offer := models.RoommateOffer{
+		UploaderID: tokenId,
+	}
+	user := models.User{
+		ID: uint(userId),
+	}
+	dbc := models.NewDatabaseConnection()
+	if err := dbc.GetUser(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error finding requested user")
+	}
+	if err := dbc.GetOffer(&offer); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error finding your offer")
+	}
+	if offer.AcceptedResidentCount == offer.TargetResidentCount {
+		return echo.NewHTTPError(http.StatusBadRequest, "Offer is already full")
+	}
+	request := models.Request{
+		OfferID: offer.ID,
+		UserID:  uint(user.ID),
+	}
+	if err := dbc.CreateResidentRequest(&request); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusOK, request)
 }
 
 func DeleteResidentRequestHandler(c echo.Context) error {
-	if token, ok := c.Get("user").(*jwt.Token); ok {
-		myId := uint(token.Claims.(jwt.MapClaims)["id"].(float64))
-		userId, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		if myId == uint(userId) {
-			return echo.NewHTTPError(http.StatusBadRequest, "Attempted to remove yourself")
-		}
-		offer := models.RoommateOffer{
-			UploaderID: myId,
-		}
-		dbc := models.NewDatabaseConnection()
-		if err := dbc.GetOffer(&offer); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		request := models.Request{
-			UserID:  uint(userId),
-			OfferID: offer.ID,
-		}
-		if err := dbc.GetResidentRequest(&request); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		if request.Status == models.RequestStatusAccepted {
-			if err := dbc.DecrementOffer(&offer); err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-			}
-		}
-		if err := dbc.DeleteResidentRequest(&request); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		res := struct {
-			Message string
-		}{
-			"Deleted",
-		}
-		return c.JSON(http.StatusOK, res)
-	} else {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Token type assertion failed?")
+	var tokenId uint
+	if err := utils.GetIdFromContext(c, &tokenId); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid user ID")
+	}
+	if uint(userId) == tokenId {
+		return echo.NewHTTPError(http.StatusBadRequest, "User ID matches token ID")
+	}
+	offer := models.RoommateOffer{
+		UploaderID: tokenId,
+	}
+	dbc := models.NewDatabaseConnection()
+	if err := dbc.GetOffer(&offer); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error finding your offer")
+	}
+	request := models.Request{
+		OfferID: offer.ID,
+		UserID:  uint(userId),
+	}
+	if err := dbc.GetResidentRequest(&request); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error finding request")
+	}
+	if request.Status == models.RequestStatusAccepted {
+		offer.AcceptedResidentCount--
+		if err := dbc.UpdateOffer(&offer); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error updating offer")
+		}
+	}
+	if err := dbc.DeleteResidentRequest(&request); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error deleting request")
+	}
+	return c.JSON(http.StatusOK, request)
 }
 
 func RespondToResidentRequestHandler(c echo.Context) error {
-	if token, ok := c.Get("user").(*jwt.Token); ok {
-		userId := uint(token.Claims.(jwt.MapClaims)["id"].(float64))
-		requestId, err := strconv.Atoi(c.Param("id"))
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		request := models.Request{
-			ID: uint(requestId),
-		}
-		dbc := models.NewDatabaseConnection()
-		if err := dbc.GetResidentRequest(&request); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		if request.UserID != userId {
-			return echo.NewHTTPError(http.StatusUnauthorized, "You arent the authorized user")
-		}
-		request.Status = c.QueryParam("status")
-		if request.Status == models.RequestStatusAccepted {
-			offer := models.RoommateOffer{
-				ID: request.OfferID,
-			}
-			if err := dbc.IncrementOffer(&offer); err != nil {
-				return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-			}
-			/*if offer.AcceptedResidentCount == offer.TargetResidentCount {
-				if err := dbc.RemovePendingResidentRequests(&offer); err != nil {
-					return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-				}
-			}*/
-		}
-		if err := dbc.UpdateResidentRequest(&request); err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-		}
-		return c.JSON(http.StatusOK, request)
-	} else {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Token type assertion failed?")
+	var tokenId uint
+	if err := utils.GetIdFromContext(c, &tokenId); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
+	requestId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request ID")
+	}
+	status := strings.ToLower(c.QueryParam("status"))
+	if status != models.RequestStatusAccepted && status != models.RequestStatusDenied {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid status")
+	}
+	request := models.Request{
+		ID: uint(requestId),
+	}
+	dbc := models.NewDatabaseConnection()
+	if err := dbc.GetResidentRequest(&request); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if request.UserID != tokenId {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Request user ID doesn't match token ID")
+	}
+	request.Status = status
+	if err := dbc.UpdateResidentRequest(&request); err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Error updating request status")
+	}
+	if status == models.RequestStatusAccepted {
+		offer := models.RoommateOffer{
+			ID: request.OfferID,
+		}
+		if err := dbc.GetOffer(&offer); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		offer.AcceptedResidentCount++
+		if err := dbc.UpdateOffer(&offer); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error updating offer")
+		}
+	}
+	return c.JSON(http.StatusOK, request)
 }
