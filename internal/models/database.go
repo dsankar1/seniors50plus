@@ -82,6 +82,15 @@ func (dbc *DatabaseConnection) AttachTags(user *User) error {
 	}
 }
 
+func (dbc *DatabaseConnection) AttachCommunicationRequests(user *User) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Table("communication_requests").Where("user_id = ?", user.ID).Find(&user.Requests).Error
+	}
+}
+
 // Offer related DB methods
 func (dbc *DatabaseConnection) CreateOffer(offer *RoommateOffer) error {
 	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
@@ -95,6 +104,54 @@ func (dbc *DatabaseConnection) CreateOffer(offer *RoommateOffer) error {
 			return results.Error
 		}
 		return errors.New("Offer already exists")
+	}
+}
+
+func (dbc *DatabaseConnection) DecrementOffer(offer *RoommateOffer) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		if err := db.Where(offer).First(offer).Error; err != nil {
+			return err
+		}
+		offer.AcceptedResidentCount--
+		return db.Save(offer).Error
+	}
+}
+
+func (dbc *DatabaseConnection) IncrementOffer(offer *RoommateOffer) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		if err := db.Where(offer).First(offer).Error; err != nil {
+			return err
+		}
+		offer.AcceptedResidentCount++
+		return db.Save(offer).Error
+	}
+}
+
+func (dbc *DatabaseConnection) RemovePendingResidentRequests(offer *RoommateOffer) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		request := Request{
+			OfferID: offer.ID,
+			Status:  RequestStatusPending,
+		}
+		return db.Table("residents").Delete(&request).Error
+	}
+}
+
+func (dbc *DatabaseConnection) UpdateOffer(offer *RoommateOffer) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Save(offer).Error
 	}
 }
 
@@ -149,15 +206,6 @@ func (dbc *DatabaseConnection) CreateCommunicationRequest(request *Request) erro
 		return err
 	} else {
 		defer db.Close()
-		offer := RoommateOffer{
-			ID: request.OfferID,
-		}
-		if err := dbc.GetOffer(&offer); err != nil {
-			return err
-		}
-		if offer.UploaderID == request.UserID {
-			return errors.New("You can't request your own post")
-		}
 		if results := db.Table("communication_requests").Where(request).First(&Request{}); results.Error != nil {
 			if results.RecordNotFound() {
 				return db.Table("communication_requests").Create(request).Error
@@ -189,5 +237,54 @@ func (dbc *DatabaseConnection) DeleteCommunicationRequest(request *Request) erro
 			return errors.New("Can't delete denied requests")
 		}
 		return db.Table("communication_requests").Delete(request).Error
+	}
+}
+
+// Resident request related db methods
+func (dbc *DatabaseConnection) GetResidentRequest(request *Request) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Table("residents").Where(request).First(request).Error
+	}
+}
+
+func (dbc *DatabaseConnection) CreateResidentRequest(request *Request) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		if results := db.Table("residents").Where(request).First(&Request{}); results.Error != nil {
+			if results.RecordNotFound() {
+				return db.Table("residents").Create(request).Error
+			}
+			return results.Error
+		}
+		return errors.New("Request already exists")
+	}
+}
+
+func (dbc *DatabaseConnection) UpdateResidentRequest(request *Request) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		return db.Table("residents").Save(request).Error
+	}
+}
+
+func (dbc *DatabaseConnection) DeleteResidentRequest(request *Request) error {
+	if db, err := gorm.Open("mysql", dbc.dbstring); err != nil {
+		return err
+	} else {
+		defer db.Close()
+		if err := dbc.GetResidentRequest(request); err != nil {
+			return err
+		}
+		if request.Status == RequestStatusDenied {
+			return errors.New("Can't delete denied requests")
+		}
+		return db.Table("residents").Delete(request).Error
 	}
 }

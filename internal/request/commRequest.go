@@ -10,23 +10,42 @@ import (
 )
 
 func CreateCommunicationRequestHandler(c echo.Context) error {
+	var tokenId uint
 	if token, ok := c.Get("user").(*jwt.Token); ok {
-		userId := uint(token.Claims.(jwt.MapClaims)["id"].(float64))
+		tokenId = uint(token.Claims.(jwt.MapClaims)["id"].(float64))
+	} else {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Token type assertion failed?")
+	}
+
+	if token, ok := c.Get("user").(*jwt.Token); ok {
+
 		offerId, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+		offer := models.RoommateOffer{
+			ID: uint(offerId),
+		}
+		dbc := models.NewDatabaseConnection()
+		if err := dbc.GetOffer(&offer); err != nil {
+			return err
+		}
+		if offer.AcceptedResidentCount == offer.TargetResidentCount {
+			echo.NewHTTPError(http.StatusInternalServerError, "Offer is already full")
+		}
+		if offer.UploaderID == userId {
+			echo.NewHTTPError(http.StatusBadRequest, "Attempted to request your own post")
 		}
 		request := models.Request{
 			UserID:  userId,
 			OfferID: uint(offerId),
 		}
-		dbc := models.NewDatabaseConnection()
 		if err := dbc.CreateCommunicationRequest(&request); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		return c.JSON(http.StatusOK, request)
 	} else {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Token type assertion failed?")
+
 	}
 }
 
@@ -46,7 +65,7 @@ func DeleteCommunicationRequestHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		res := struct {
-			message string
+			Message string
 		}{
 			"Deleted",
 		}
@@ -79,11 +98,7 @@ func RespondToCommunicationRequestHandler(c echo.Context) error {
 		if userId != offer.UploaderID {
 			return echo.NewHTTPError(http.StatusUnauthorized, "You arent the owner of the offer")
 		}
-		if status := c.QueryParam("status"); status != models.RequestStatusAccepted && status != models.RequestStatusDenied {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Invalid/Missing status parameter")
-		} else {
-			request.Status = status
-		}
+		request.Status = c.QueryParam("status")
 		if err := dbc.UpdateCommunicationRequest(&request); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}

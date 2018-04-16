@@ -34,11 +34,18 @@ func RegisterHandlers(e *echo.Echo) {
 
 	e.DELETE("/api/offer", offer.DeleteOfferHandler)
 
-	// REQUESTS
-	e.GET("/api/offer/:id/request", request.CreateCommunicationRequestHandler)
+	// COMMUNICATION REQUESTS
+	e.POST("/api/offer/:id/request", request.CreateCommunicationRequestHandler)
 
 	e.DELETE("/api/offer/:id/request", request.DeleteCommunicationRequestHandler)
 
-	e.GET("/api/request/:id", request.RespondToCommunicationRequestHandler)
+	e.PUT("/api/offer/request/:id", request.RespondToCommunicationRequestHandler) //?status=value
+
+	// RESIDENT REQUESTS
+	e.POST("/api/user/:id/request", request.CreateResidentRequestHandler)
+
+	e.DELETE("/api/user/:id/request", request.DeleteResidentRequestHandler)
+
+	e.PUT("/api/user/request/:id", request.RespondToResidentRequestHandler) //?status=value
 
 }
