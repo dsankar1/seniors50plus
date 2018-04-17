@@ -27,6 +27,6 @@ type RoommateOffer struct {
 	TargetResidentCount   uint    `validate:"required" gorm:"not null; default:2"`
 	AcceptedResidentCount uint    `gorm:"not null; default:1"`
 	PropertyImageUrl      string
-	Residents             []Resident             `gorm:"foreignkey:OfferID"`
-	Requests              []CommunicationRequest `gorm:"foreignkey:OfferID"`
+	Residents             []Request `gorm:"foreignkey:OfferID"`
+	Requests              []Request `gorm:"foreignkey:OfferID"`
 }

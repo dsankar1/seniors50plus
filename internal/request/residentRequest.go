@@ -29,6 +29,10 @@ func CreateResidentRequestHandler(c echo.Context) error {
 		ID: uint(userId),
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.GetUser(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error finding requested user")
 	}
@@ -64,6 +68,10 @@ func DeleteResidentRequestHandler(c echo.Context) error {
 		UploaderID: tokenId,
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.GetOffer(&offer); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error finding your offer")
 	}
@@ -103,6 +111,10 @@ func RespondToResidentRequestHandler(c echo.Context) error {
 		ID: uint(requestId),
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.GetResidentRequest(&request); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -123,6 +135,11 @@ func RespondToResidentRequestHandler(c echo.Context) error {
 		offer.AcceptedResidentCount++
 		if err := dbc.UpdateOffer(&offer); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Error updating offer")
+		}
+		if offer.AcceptedResidentCount == offer.TargetResidentCount {
+			if err := dbc.RemovePendingResidentRequests(&offer); err != nil {
+				return echo.NewHTTPError(http.StatusInternalServerError, "Error removing pending requests")
+			}
 		}
 	}
 	return c.JSON(http.StatusOK, request)

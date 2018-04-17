@@ -23,6 +23,10 @@ func CreateCommunicationRequestHandler(c echo.Context) error {
 		ID: uint(offerId),
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.GetOffer(&offer); err != nil {
 		return err
 	}
@@ -56,6 +60,10 @@ func DeleteCommunicationRequestHandler(c echo.Context) error {
 		OfferID: uint(offerId),
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.DeleteCommunicationRequest(&request); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -79,6 +87,10 @@ func RespondToCommunicationRequestHandler(c echo.Context) error {
 		ID: uint(requestId),
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.GetCommunicationRequest(&request); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

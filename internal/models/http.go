@@ -47,6 +47,10 @@ type (
 	Validator struct {
 		Validator *validator.Validate
 	}
+
+	ReportRequest struct {
+		Message string `validate:"required"`
+	}
 )
 
 func (v *Validator) Validate(i interface{}) error {

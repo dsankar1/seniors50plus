@@ -2,6 +2,8 @@ package routing
 
 import (
 	"seniors50plus/internal/auth"
+	"seniors50plus/internal/management"
+	"seniors50plus/internal/match"
 	"seniors50plus/internal/offer"
 	"seniors50plus/internal/request"
 	"seniors50plus/internal/user"
@@ -11,15 +13,17 @@ import (
 
 func RegisterHandlers(e *echo.Echo) {
 
-	// AUTH
+	// AUTH ENDPOINTS
 	e.POST("/api/auth/login", auth.LoginHandler)
 
 	e.POST("/api/auth/signup", auth.SignupHandler)
 
 	e.GET("/api/auth/signup/confirmation", auth.EmailConfirmationHandler)
 
-	// USER
+	// USER ENDPOINTS
 	e.GET("/api/user/:id", user.GetUserHandler)
+
+	e.GET("/api/user/:id/email", user.GetUserEmailHandler)
 
 	e.POST("/api/user/list", user.GetUserListHandler)
 
@@ -27,27 +31,66 @@ func RegisterHandlers(e *echo.Echo) {
 
 	e.PUT("/api/user", user.UpdateUserHandler)
 
-	// OFFERS
+	// OFFERS ENDPOINTS
 	e.POST("/api/offer", offer.PostOfferHandler)
 
 	e.GET("/api/offer", offer.GetMyOfferHandler)
 
 	e.GET("/api/offer/:id", offer.GetOfferHandler)
 
+	e.GET("/api/offer/:id/email", offer.GetOfferEmailHandler)
+
 	e.DELETE("/api/offer", offer.DeleteMyOfferHandler)
 
-	// COMMUNICATION REQUESTS
+	// COMMUNICATION ENDPOINTS
 	e.POST("/api/offer/:id/request", request.CreateCommunicationRequestHandler)
 
 	e.DELETE("/api/offer/:id/request", request.DeleteCommunicationRequestHandler)
 
 	e.PUT("/api/offer/request/:id", request.RespondToCommunicationRequestHandler) //?status=value
 
-	// RESIDENT REQUESTS
+	// RESIDENT ENDPOINTS
 	e.POST("/api/user/:id/request", request.CreateResidentRequestHandler)
 
 	e.DELETE("/api/user/:id/request", request.DeleteResidentRequestHandler)
 
 	e.PUT("/api/user/request/:id", request.RespondToResidentRequestHandler) //?status=value
+
+	// REPORT USER ENDPOINTS
+	e.POST("/api/user/:id/report", management.ReportUserHandler)
+
+	e.DELETE("/api/user/:id/report", management.ResolveReportsHandler)
+
+	// FLAG OFFER ENDPOINTS
+	e.POST("/api/offer/:id/flag", management.FlagOfferHandler)
+
+	e.DELETE("/api/offer/:id/flag", management.UnflagOfferHandler)
+
+	// MOD ENDPOINTS
+	e.GET("/api/user/report", management.GetReportsHandler)
+
+	e.GET("/api/offer/flag", management.GetFlaggedOffers)
+
+	e.POST("/api/user/:id/ban", management.BanUserHandler)
+
+	e.DELETE("/api/user/:id/ban", management.UnbanUserHandler)
+
+	e.GET("/api/user/ban", management.GetBannedUsersHandler)
+
+	e.POST("/api/offer/:id/ban", management.BanOfferHandler)
+
+	// SUSAN ENDPOINTS
+	e.GET("/api/user/mod", management.GetModsHandler)
+
+	e.POST("/api/user/:id/mod", management.ModUserHandler)
+
+	e.DELETE("/api/user/:id/mod", management.UnmodUserHandler)
+
+	/*----------------------------------------------------
+	////////////Below here needs to be done///////////////
+	----------------------------------------------------*/
+
+	// MATCH ENDPOINTS
+	e.POST("/api/match", match.FindMatchesHandler)
 
 }

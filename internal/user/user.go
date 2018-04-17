@@ -25,6 +25,10 @@ func GetUserHandler(c echo.Context) error {
 		ID: uint(userId),
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.GetUser(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -33,6 +37,54 @@ func GetUserHandler(c echo.Context) error {
 	}
 	user.Email = ""
 	return c.JSON(http.StatusOK, user)
+}
+
+func GetUserEmailHandler(c echo.Context) error {
+	var token models.Token
+	if err := utils.GetTokenFromContext(c, &token); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	userId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
+	var res struct {
+		Email string
+	}
+
+	if uint(userId) == token.ID {
+		res.Email = token.Email
+		return c.JSON(http.StatusOK, res)
+	}
+	offer := models.RoommateOffer{
+		UploaderID: token.ID,
+	}
+	if err := dbc.GetOffer(&offer); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	request := models.Request{
+		UserID:  uint(userId),
+		OfferID: offer.ID,
+	}
+	if err := dbc.GetCommunicationRequest(&request); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if request.Status != models.RequestStatusAccepted {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Not authorized to view this email")
+	}
+	user := models.User{
+		ID: uint(userId),
+	}
+	if err := dbc.GetUser(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	res.Email = user.Email
+	return c.JSON(http.StatusOK, res)
 }
 
 func GetMyselfHandler(c echo.Context) error {
@@ -44,6 +96,10 @@ func GetMyselfHandler(c echo.Context) error {
 		ID: tokenId,
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.GetUser(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -54,6 +110,9 @@ func GetMyselfHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if err := dbc.AttachResidentInvitations(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if err := dbc.AttachFlags(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	return c.JSON(http.StatusOK, user)
@@ -75,6 +134,10 @@ func GetUserListHandler(c echo.Context) error {
 			ID: listItem.ID,
 		}
 		dbc := models.NewDatabaseConnection()
+		if err := dbc.Open(); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+		}
+		defer dbc.Close()
 		if err := dbc.GetUser(&user); err != nil {
 			errAppend := fmt.Sprintf(" with id=%v (index %v)", listItem.ID, i)
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error()+errAppend)
@@ -90,6 +153,10 @@ func UpdateUserHandler(c echo.Context) error {
 		userId := uint(token.Claims.(jwt.MapClaims)["id"].(float64))
 		user := models.User{ID: userId}
 		dbc := models.NewDatabaseConnection()
+		if err := dbc.Open(); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+		}
+		defer dbc.Close()
 		if err := dbc.GetUser(&user); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
@@ -116,6 +183,7 @@ func UpdateUserHandler(c echo.Context) error {
 		if err := dbc.UpdateUser(&user); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
+		dbc.Close()
 		return c.JSON(http.StatusOK, user)
 	} else {
 		return echo.NewHTTPError(http.StatusBadRequest, "Token type assertion failed?")

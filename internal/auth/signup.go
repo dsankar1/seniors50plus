@@ -14,6 +14,10 @@ func EmailConfirmationHandler(c echo.Context) error {
 	if token, ok := c.Get("user").(*jwt.Token); ok {
 		userId := uint(token.Claims.(jwt.MapClaims)["id"].(float64))
 		dbc := models.NewDatabaseConnection()
+		if err := dbc.Open(); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+		}
+		defer dbc.Close()
 		user := models.User{
 			ID: userId,
 		}
@@ -51,6 +55,10 @@ func SignupHandler(c echo.Context) error {
 		PasswordHash: passwordHash,
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.CreateUser(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}

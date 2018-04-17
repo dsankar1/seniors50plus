@@ -21,6 +21,10 @@ func LoginHandler(c echo.Context) error {
 		Email: req.Email,
 	}
 	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
 	if err := dbc.GetUser(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -30,6 +34,9 @@ func LoginHandler(c echo.Context) error {
 	if user.Active == false {
 		return echo.NewHTTPError(http.StatusBadRequest, "Account not activated")
 	}
+	if user.Banned {
+		return echo.NewHTTPError(http.StatusBadRequest, "Account banned")
+	}
 	if err := dbc.AttachTags(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -37,6 +44,9 @@ func LoginHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if err := dbc.AttachResidentInvitations(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if err := dbc.AttachFlags(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	token := jwt.New(jwt.SigningMethodHS256)
