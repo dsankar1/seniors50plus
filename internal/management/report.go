@@ -68,7 +68,7 @@ func ResolveReportsHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	res := struct {
-		Message string
+		Message string `json:"message`
 	}{
 		"Reports Deleted",
 	}

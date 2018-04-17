@@ -46,6 +46,15 @@ func BanUserHandler(c echo.Context) error {
 	if token.Admin != models.AdminLevelModerator && token.Admin != models.AdminLevelSusan {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Not authorized")
 	}
+	user := models.User{
+		ID: uint(userId),
+	}
+	if err := dbc.GetUser(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if user.AdminLevel != models.AdminLevelUser {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Unable to ban moderator account")
+	}
 	ban := models.Ban{
 		ModID:    token.ID,
 		BannedID: uint(userId),
@@ -74,7 +83,7 @@ func UnbanUserHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Not authorized")
 	}
 	ban := models.Ban{
-		ID: uint(userId),
+		BannedID: uint(userId),
 	}
 	if err := dbc.DeleteBan(&ban); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

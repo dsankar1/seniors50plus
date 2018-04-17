@@ -8,22 +8,22 @@ type Report struct {
 	ID             uint
 	CreatedAt      time.Time
 	DeletedAt      *time.Time
-	UserID         uint   `gorm:"not null"`
-	ReportedUserID uint   `gorm:"not null"`
-	Message        string `gorm:"not null"`
+	UserID         uint   `json:"userID" gorm:"not null"`
+	ReportedUserID uint   `json:"reportedUserID" gorm:"not null"`
+	Message        string `json:"message" gorm:"not null"`
 }
 
 type Flag struct {
 	ID              uint
 	CreatedAt       time.Time
-	UserID          uint `gorm:"not null"`
-	ReportedOfferID uint `gorm:"not null"`
+	UserID          uint `json:"userID" gorm:"not null"`
+	ReportedOfferID uint `json:"reportedOfferID" gorm:"not null"`
 }
 
 type Ban struct {
 	ID        uint
 	CreatedAt time.Time
 	DeletedAt *time.Time
-	ModID     uint `gorm:"not null"`
-	BannedID  uint `gorm:"not null"`
+	ModID     uint `json:"modID" gorm:"not null"`
+	BannedID  uint `json:"bannedID" gorm:"not null"`
 }

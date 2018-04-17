@@ -265,6 +265,17 @@ func (dbc *DatabaseConnection) GetAllReports(reports *[]Report) error {
 }
 
 // Ban related db methods
+func (dbc *DatabaseConnection) BanExists(ban *Ban) (bool, error) {
+	db := dbc.db
+	if results := db.Where(ban).First(ban); results.Error != nil {
+		if results.RecordNotFound() {
+			return false, nil
+		}
+		return false, results.Error
+	}
+	return true, nil
+}
+
 func (dbc *DatabaseConnection) GetAllBans(bans *[]Ban) error {
 	db := dbc.db
 	return db.Find(bans).Error
@@ -272,12 +283,6 @@ func (dbc *DatabaseConnection) GetAllBans(bans *[]Ban) error {
 
 func (dbc *DatabaseConnection) CreateBan(ban *Ban) error {
 	db := dbc.db
-	user := User{
-		ID: ban.BannedID,
-	}
-	if err := dbc.GetUser(&user); err != nil {
-		return err
-	}
 	if results := db.Where(ban).First(&Ban{}); results.Error != nil {
 		if results.RecordNotFound() {
 			if err := db.Where("user_id like ?", ban.BannedID).Delete(Tag{}).Error; err != nil {
@@ -298,10 +303,6 @@ func (dbc *DatabaseConnection) CreateBan(ban *Ban) error {
 			if err := dbc.DeleteOffer(&offer); err != nil && err.Error() != "record not found" {
 				return err
 			}
-			user.Banned = true
-			if err := db.Save(&user).Error; err != nil {
-				return err
-			}
 			return db.Create(ban).Error
 		}
 		return results.Error
@@ -311,15 +312,5 @@ func (dbc *DatabaseConnection) CreateBan(ban *Ban) error {
 
 func (dbc *DatabaseConnection) DeleteBan(ban *Ban) error {
 	db := dbc.db
-	user := User{
-		ID: ban.BannedID,
-	}
-	if err := dbc.GetUser(&user); err != nil {
-		return err
-	}
-	user.Banned = false
-	if err := db.Save(&user).Error; err != nil {
-		return err
-	}
 	return db.Delete(ban).Error
 }

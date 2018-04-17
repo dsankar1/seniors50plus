@@ -47,7 +47,7 @@ func FlagOfferHandler(c echo.Context) error {
 		ID: uint(offerId),
 	}
 	if err := dbc.GetOffer(&offer); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, "Error finding offer")
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if offer.UploaderID == token.ID {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Token ID matches offer uploader ID")

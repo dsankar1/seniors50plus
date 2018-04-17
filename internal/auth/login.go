@@ -32,10 +32,25 @@ func LoginHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, "Incorrect password")
 	}
 	if user.Active == false {
-		return echo.NewHTTPError(http.StatusBadRequest, "Account not activated")
+		if err := SendConfirmationEmail(&user); err != nil {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
+		res := struct {
+			Message string `json:"message"`
+		}{
+			"Account not active. Confirmation email resent to " + user.Email,
+		}
+		return c.JSON(http.StatusOK, res)
 	}
-	if user.Banned {
-		return echo.NewHTTPError(http.StatusBadRequest, "Account banned")
+	ban := models.Ban{
+		BannedID: user.ID,
+	}
+	if exists, err := dbc.BanExists(&ban); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	} else {
+		if exists {
+			return echo.NewHTTPError(http.StatusBadRequest, "Account banned")
+		}
 	}
 	if err := dbc.AttachTags(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())

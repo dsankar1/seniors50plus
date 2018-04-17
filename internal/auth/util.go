@@ -3,10 +3,12 @@ package auth
 import (
 	"errors"
 	"os"
+	"seniors50plus/internal/email"
 	"seniors50plus/internal/models"
 	"time"
 	"unicode"
 
+	jwt "github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,6 +16,34 @@ const (
 	requiredAge          = 40
 	registrationTemplate = "../../templates/registration.html"
 )
+
+func SendConfirmationEmail(user *models.User) error {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	claims["id"] = user.ID
+	claims["exp"] = time.Now().Add(time.Hour).Unix()
+	tokenString, _ := token.SignedString(GetKey())
+	tokenString = "https://roommates40plus.com/api/auth/signup/confirmation?token=" + tokenString
+
+	tmpInfo := models.TemplateInfo{
+		Firstname: user.Firstname,
+		URL:       tokenString,
+	}
+
+	if err := email.SendEmail(
+		"smtp.gmail.com",
+		587,
+		"roommates40plus@gmail.com",
+		"capst0ne!40Plus",
+		[]string{user.Email},
+		"Registration Confirmation",
+		registrationTemplate,
+		tmpInfo,
+	); err != nil {
+		return err
+	}
+	return nil
+}
 
 func GetKey() []byte {
 	return []byte(os.Getenv("ROOMMATES_KEY"))

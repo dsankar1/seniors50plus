@@ -14,19 +14,19 @@ type RoommateOffer struct {
 	CreatedAt             time.Time
 	UpdatedAt             time.Time
 	DeletedAt             *time.Time
-	UploaderID            uint    `gorm:"not null"`
-	GenderRequirement     string  `validate:"required" gorm:"type:enum('male','female','none'); not null; default:'none'"`
-	PreChosenProperty     bool    `gorm:"not null"`
-	PropertyType          string  `validate:"required" gorm:"type:enum('house','apartment'); default:'apartment'; not null"`
-	State                 string  `validate:"required" gorm:"not null"`
-	City                  string  `validate:"required" gorm:"not null"`
-	Zip                   uint    `validate:"required" gorm:"not null"`
-	Budget                float32 `validate:"required" gorm:"not null"`
-	PetsAllowed           bool    `gorm:"not null"`
-	SmokingAllowed        bool    `gorm:"not null"`
-	TargetResidentCount   uint    `validate:"required" gorm:"not null; default:2"`
-	AcceptedResidentCount uint    `gorm:"not null; default:1"`
-	PropertyImageUrl      string
-	Residents             []Request `gorm:"foreignkey:OfferID"`
-	Requests              []Request `gorm:"foreignkey:OfferID"`
+	UploaderID            uint      `json:"uploaderID" gorm:"not null"`
+	GenderRequirement     string    `json:"genderRequirement" validate:"required" gorm:"type:enum('male','female','none'); not null; default:'none'"`
+	PreChosenProperty     bool      `json:"preChosenProperty" gorm:"not null"`
+	PropertyType          string    `json:"propertyType" validate:"required" gorm:"type:enum('house','apartment'); default:'apartment'; not null"`
+	State                 string    `json:"state" validate:"required" gorm:"not null"`
+	City                  string    `json:"city" validate:"required" gorm:"not null"`
+	Zip                   uint      `json:"zip" validate:"required" gorm:"not null"`
+	Budget                float32   `json:"budget" validate:"required" gorm:"not null"`
+	PetsAllowed           bool      `json:"petsAllowed" gorm:"not null"`
+	SmokingAllowed        bool      `json:"smokingAllowed" gorm:"not null"`
+	TargetResidentCount   uint      `json:"targetResidentCount" validate:"required" gorm:"not null; default:2"`
+	AcceptedResidentCount uint      `json:"acceptedResidentCount" gorm:"not null; default:1"`
+	PropertyImageURL      string    `json:"propertyImageURL"`
+	Residents             []Request `json:"residents" gorm:"foreignkey:OfferID"`
+	Requests              []Request `json:"requests" gorm:"foreignkey:OfferID"`
 }

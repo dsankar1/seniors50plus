@@ -16,26 +16,25 @@ type User struct {
 	ID              uint
 	CreatedAt       time.Time
 	UpdatedAt       time.Time
-	Email           string    `gorm:"unique; not null"`
-	Firstname       string    `validate:"required" gorm:"not null"`
-	Lastname        string    `validate:"required" gorm:"not null"`
-	Gender          string    `validate:"required" gorm:"type:enum('male','female'); not null"`
-	Birthdate       string    `validate:"required" gorm:"type:date; not null"`
-	AdminLevel      string    `gorm:"type:enum('user','moderator','susan'); not null; default:'user'"`
-	About           string    `validate:"required" gorm:"type:varchar(3000); not null"`
-	ProfileImageUrl string    `gorm:"not null"`
+	Email           string    `json:"email" gorm:"unique; not null"`
+	Firstname       string    `json:"firstname" validate:"required" gorm:"not null"`
+	Lastname        string    `json:"lastname" validate:"required" gorm:"not null"`
+	Gender          string    `json:"gender" validate:"required" gorm:"type:enum('male','female'); not null"`
+	Birthdate       string    `json:"birthdate" validate:"required" gorm:"type:date; not null"`
+	AdminLevel      string    `json:"adminLevel" gorm:"type:enum('user','moderator','susan'); not null; default:'user'"`
+	About           string    `json:"about" validate:"required" gorm:"type:varchar(3000); not null"`
+	ProfileImageURL string    `json:"profileImageURL" gorm:"not null"`
 	Active          bool      `json:"-" gorm:"not null; default:false"`
-	Banned          bool      `json:"-" gorm:"not null; default:false"`
 	PasswordHash    string    `json:"-" gorm:"not null"`
-	Tags            []Tag     `validate:"required" gorm:"foreignkey:UserID"`
-	Invitations     []Request `gorm:"foreignkey:UserID"`
-	Requests        []Request `gorm:"foreignkey:UserID"`
-	Flags           []Flag    `gorm:"foreignkey:UserID"`
+	Tags            []Tag     `json:"tags" validate:"required" gorm:"foreignkey:UserID"`
+	Invitations     []Request `json:"invitations" gorm:"foreignkey:UserID"`
+	Requests        []Request `json:"requests" gorm:"foreignkey:UserID"`
+	Flags           []Flag    `json:"flags" gorm:"foreignkey:UserID"`
 }
 
 type Tag struct {
 	ID        uint
 	CreatedAt time.Time
-	UserID    uint   `gorm:"not null"`
-	Content   string `validate:"required" gorm:"not null"`
+	UserID    uint   `json:"userID" gorm:"not null"`
+	Content   string `json:"content" validate:"required" gorm:"not null"`
 }
