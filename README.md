@@ -90,9 +90,9 @@ type Ban struct {
 
 ## Endpoints
 
-Description: Returns all user information along with an resource token
-Endpoint: /api/auth/login
-Method: POST
+Description: Returns all user information along with an resource token<br />
+Endpoint: /api/auth/login<br />
+Method: POST<br />
 Request Body:
 ```
 {
@@ -101,9 +101,9 @@ Request Body:
 }
 ```
 
-Description: Registers a new inactive user account (confirm email to activate)
-Endpoint: /api/auth/signup
-Method: POST
+Description: Registers a new inactive user account (confirm email to activate)<br />
+Endpoint: /api/auth/signup<br />
+Method: POST<br />
 Request Body:
 ```
 {
@@ -118,20 +118,20 @@ Request Body:
 
 ### *MUST INCLUDE RESOURCE TOKEN FOR FOLLOWING ENDPOINTS*
 
-Description: Get the details of a user with :id (Excludes email)
-Endpoint: /api/user/:id
-Method: GET
-Request Body: none
+Description: Get the details of a user with :id (Excludes email)<br />
+Endpoint: /api/user/:id<br />
+Method: GET<br />
+Request Body: none<br />
 
-Description: Get the email of the user with :id
-*note - only available if communication request is accepted*	
-Endpoint: /api/user/:id/email
-Method: GET
-Request Body: none
+Description: Get the email of the user with :id<br />
+*only available if communication request is accepted*<br />
+Endpoint: /api/user/:id/email<br />
+Method: GET<br />
+Request Body: none<br />
 
-Description: Get a detailed list of users provided a list of emails
-Endpoint: /api/user/list
-Method: POST
+Description: Get a detailed list of users provided a list of emails<br />
+Endpoint: /api/user/list<br />
+Method: POST<br />
 Request Body: 
 ```
 [
@@ -142,16 +142,17 @@ Request Body:
 ]
 ```
 
-// Gets information on the currently logged in user
-Endpoint: /api/user
-Method: GET
+Description: Gets information on the currently logged in user<br />
+Endpoint: /api/user<br />
+Method: GET<br />
 Request Body: none
 
-// Edits the information of the currently logged in user
-*note - Must include all fields, even if they aren't changed
-Endpoint: /api/user
-Method: POST
+Description: Edits the information of the currently logged in user<br />
+*note - Must include all fields, even if they aren't changed<br />
+Endpoint: /api/user<br />
+Method: POST<br />
 Request Body: 
+```
 {
     "firstname":"",
     "lastname":"",
@@ -165,6 +166,7 @@ Request Body:
         ...
     ]
 }
+```
 
 ## Built With
 
