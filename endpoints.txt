@@ -1,125 +1,72 @@
 // AUTH ENDPOINTS
-	Endpoint: /api/auth/login
-	Method: POST
-	Request Body:
-    {
-		"email":"",
-		"password":""
-    }
+e.POST("/api/auth/login", auth.LoginHandler)
 
-	Endpoint: /api/auth/signup
-	Method: POST
-	Request Body:
-	{
-		"email":"",
-		"password":"",
-		"firstname":"",
-		"lastname":"",
-		"gender":"male" or "female",
-		"birthdate":"YYYY-MM-DD"
-	}
+e.POST("/api/auth/signup", auth.SignupHandler)
 
-	*MUST INCLUDE AUTHORIZATION TOKEN FOR FOLLOWING ENDPOINTS*
+e.GET("/api/auth/signup/confirmation", auth.EmailConfirmationHandler)
 
-	// Get the details of a user with :id (Excludes email)
-	Endpoint: /api/user/:id
-	Method: GET
-	Request Body: none
+// USER ENDPOINTS
+e.GET("/api/user/:id", user.GetUserHandler)
 
-	// Get the email of the user with :id
-	*note - only available if communication request is accepted*	
-	Endpoint: /api/user/:id/email
-	Method: GET
-	Request Body: none
+e.GET("/api/user/:id/email", user.GetUserEmailHandler)
 
-	// Get a detailed list of users provided a list of emails
-	Endpoint: /api/user/list
-	Method: POST
-	Request Body: 
-	[
-		{
-			"id":""
-		},
-		...
-	]
+e.POST("/api/user/list", user.GetUserListHandler)
 
-	// Gets information on the currently logged in user
-	Endpoint: /api/user
-	Method: GET
-	Request Body: none
+e.GET("/api/user", user.GetMyselfHandler)
 
-	// Edits the information of the currently logged in user
-	*note - Must include all fields, even if they aren't changed
-	Endpoint: /api/user
-	Method: POST
-	Request Body: 
-	{
-		"firstname":"",
-		"lastname":"",
-		"gender":"male" or "female",
-		"birthdate":"YYYY-MM-DD",
-		"about":"",
-		"tags": [
-			{
-				"content":""
-			}, 
-			...
-		]
-	}
+e.PUT("/api/user", user.UpdateUserHandler)
 
-	// 
+// OFFERS ENDPOINTS
+e.POST("/api/offer", offer.PostOfferHandler)
 
-	// OFFERS ENDPOINTS
-	e.POST("/api/offer", offer.PostOfferHandler)
+e.GET("/api/offer", offer.GetMyOfferHandler)
 
-	e.GET("/api/offer", offer.GetMyOfferHandler)
+e.GET("/api/offer/:id", offer.GetOfferHandler)
 
-	e.GET("/api/offer/:id", offer.GetOfferHandler)
+e.GET("/api/offer/:id/email", offer.GetOfferEmailHandler)
 
-	e.GET("/api/offer/:id/email", offer.GetOfferEmailHandler)
+e.DELETE("/api/offer", offer.DeleteMyOfferHandler)
 
-	e.DELETE("/api/offer", offer.DeleteMyOfferHandler)
+// COMMUNICATION ENDPOINTS
+e.POST("/api/offer/:id/request", request.CreateCommunicationRequestHandler)
 
-	// COMMUNICATION ENDPOINTS
-	e.POST("/api/offer/:id/request", request.CreateCommunicationRequestHandler)
+e.DELETE("/api/offer/:id/request", request.DeleteCommunicationRequestHandler)
 
-	e.DELETE("/api/offer/:id/request", request.DeleteCommunicationRequestHandler)
+e.PUT("/api/offer/request/:id", request.RespondToCommunicationRequestHandler) //?status=value
 
-	e.PUT("/api/offer/request/:id", request.RespondToCommunicationRequestHandler) //?status=value
+// RESIDENT ENDPOINTS
+e.POST("/api/user/:id/request", request.CreateResidentRequestHandler)
 
-	// RESIDENT ENDPOINTS
-	e.POST("/api/user/:id/request", request.CreateResidentRequestHandler)
+e.DELETE("/api/user/:id/request", request.DeleteResidentRequestHandler)
 
-	e.DELETE("/api/user/:id/request", request.DeleteResidentRequestHandler)
+e.PUT("/api/user/request/:id", request.RespondToResidentRequestHandler) //?status=value
 
-	e.PUT("/api/user/request/:id", request.RespondToResidentRequestHandler) //?status=value
+// REPORT USER ENDPOINTS
+e.POST("/api/user/:id/report", management.ReportUserHandler)
 
-	// REPORT USER ENDPOINTS
-	e.POST("/api/user/:id/report", management.ReportUserHandler)
+e.DELETE("/api/user/:id/report", management.ResolveReportsHandler)
 
-	e.DELETE("/api/user/:id/report", management.ResolveReportsHandler)
+// FLAG OFFER ENDPOINTS
+e.POST("/api/offer/:id/flag", management.FlagOfferHandler)
 
-	// FLAG OFFER ENDPOINTS
-	e.POST("/api/offer/:id/flag", management.FlagOfferHandler)
+e.DELETE("/api/offer/:id/flag", management.UnflagOfferHandler)
 
-	e.DELETE("/api/offer/:id/flag", management.UnflagOfferHandler)
+// MOD ENDPOINTS
+e.GET("/api/user/report", management.GetReportsHandler)
 
-	// MOD ENDPOINTS
-	e.GET("/api/user/report", management.GetReportsHandler)
+e.GET("/api/offer/flag", management.GetFlaggedOffers)
 
-	e.GET("/api/offer/flag", management.GetFlaggedOffers)
+e.POST("/api/user/:id/ban", management.BanUserHandler)
 
-	e.POST("/api/user/:id/ban", management.BanUserHandler)
+e.DELETE("/api/user/:id/ban", management.UnbanUserHandler)
 
-	e.DELETE("/api/user/:id/ban", management.UnbanUserHandler)
+e.GET("/api/user/ban", management.GetBannedUsersHandler)
 
-	e.GET("/api/user/ban", management.GetBannedUsersHandler)
+e.POST("/api/offer/:id/ban", management.BanOfferHandler)
 
-	e.POST("/api/offer/:id/ban", management.BanOfferHandler)
+// SUSAN ENDPOINTS
+e.GET("/api/user/mod", management.GetModsHandler)
 
-	// SUSAN ENDPOINTS
-	e.GET("/api/user/mod", management.GetModsHandler)
+e.POST("/api/user/:id/mod", management.ModUserHandler)
 
-	e.POST("/api/user/:id/mod", management.ModUserHandler)
-
-	e.DELETE("/api/user/:id/mod", management.UnmodUserHandler)
+e.DELETE("/api/user/:id/mod", management.UnmodUserHandler)

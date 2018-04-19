@@ -3,7 +3,7 @@
 Roommates 40 plus is a roommate finder targeted for users of age 40 or older. This is the web server and Rest API of the app. Below will give an overview of what the API has to offer, including the different endpoints, methods and request/response models.
 
 ## Models
-```
+```go
 type User struct {
 	ID              uint
 	CreatedAt       time.Time
@@ -90,82 +90,79 @@ type Ban struct {
 
 ## Endpoints
 
-Description: Returns all user information along with an resource token<br />
-Endpoint: /api/auth/login<br />
-Method: POST<br />
-Request Body:
-```
-{
-    "email":"",
-    "password":""
-}
-```
+```go
+// AUTH ENDPOINTS
+e.POST("/api/auth/login", auth.LoginHandler)
 
-Description: Registers a new inactive user account (confirm email to activate)<br />
-Endpoint: /api/auth/signup<br />
-Method: POST<br />
-Request Body:
-```
-{
-    "email":"",
-    "password":"",
-    "firstname":"",
-    "lastname":"",
-    "gender":"male" or "female",
-    "birthdate":"YYYY-MM-DD"
-}
-```
+e.POST("/api/auth/signup", auth.SignupHandler)
 
-### *MUST INCLUDE RESOURCE TOKEN FOR FOLLOWING ENDPOINTS*
+e.GET("/api/auth/signup/confirmation", auth.EmailConfirmationHandler)
 
-Description: Get the details of a user with :id (Excludes email)<br />
-Endpoint: /api/user/:id<br />
-Method: GET<br />
-Request Body: none<br />
+// USER ENDPOINTS
+e.GET("/api/user/:id", user.GetUserHandler)
 
-Description: Get the email of the user with :id<br />
-*only available if communication request is accepted*<br />
-Endpoint: /api/user/:id/email<br />
-Method: GET<br />
-Request Body: none<br />
+e.GET("/api/user/:id/email", user.GetUserEmailHandler)
 
-Description: Get a detailed list of users provided a list of emails<br />
-Endpoint: /api/user/list<br />
-Method: POST<br />
-Request Body: 
-```
-[
-    {
-        "id":""
-    },
-    ...
-]
-```
+e.POST("/api/user/list", user.GetUserListHandler)
 
-Description: Gets information on the currently logged in user<br />
-Endpoint: /api/user<br />
-Method: GET<br />
-Request Body: none
+e.GET("/api/user", user.GetMyselfHandler)
 
-Description: Edits the information of the currently logged in user<br />
-*note - Must include all fields, even if they aren't changed<br />
-Endpoint: /api/user<br />
-Method: POST<br />
-Request Body: 
-```
-{
-    "firstname":"",
-    "lastname":"",
-    "gender":"male" or "female",
-    "birthdate":"YYYY-MM-DD",
-    "about":"",
-    "tags": [
-        {
-            "content":""
-        }, 
-        ...
-    ]
-}
+e.PUT("/api/user", user.UpdateUserHandler)
+
+// OFFERS ENDPOINTS
+e.POST("/api/offer", offer.PostOfferHandler)
+
+e.GET("/api/offer", offer.GetMyOfferHandler)
+
+e.GET("/api/offer/:id", offer.GetOfferHandler)
+
+e.GET("/api/offer/:id/email", offer.GetOfferEmailHandler)
+
+e.DELETE("/api/offer", offer.DeleteMyOfferHandler)
+
+// COMMUNICATION ENDPOINTS
+e.POST("/api/offer/:id/request", request.CreateCommunicationRequestHandler)
+
+e.DELETE("/api/offer/:id/request", request.DeleteCommunicationRequestHandler)
+
+e.PUT("/api/offer/request/:id", request.RespondToCommunicationRequestHandler) //?status=value
+
+// RESIDENT ENDPOINTS
+e.POST("/api/user/:id/request", request.CreateResidentRequestHandler)
+
+e.DELETE("/api/user/:id/request", request.DeleteResidentRequestHandler)
+
+e.PUT("/api/user/request/:id", request.RespondToResidentRequestHandler) //?status=value
+
+// REPORT USER ENDPOINTS
+e.POST("/api/user/:id/report", management.ReportUserHandler)
+
+e.DELETE("/api/user/:id/report", management.ResolveReportsHandler)
+
+// FLAG OFFER ENDPOINTS
+e.POST("/api/offer/:id/flag", management.FlagOfferHandler)
+
+e.DELETE("/api/offer/:id/flag", management.UnflagOfferHandler)
+
+// MOD ENDPOINTS
+e.GET("/api/user/report", management.GetReportsHandler)
+
+e.GET("/api/offer/flag", management.GetFlaggedOffers)
+
+e.POST("/api/user/:id/ban", management.BanUserHandler)
+
+e.DELETE("/api/user/:id/ban", management.UnbanUserHandler)
+
+e.GET("/api/user/ban", management.GetBannedUsersHandler)
+
+e.POST("/api/offer/:id/ban", management.BanOfferHandler)
+
+// SUSAN ENDPOINTS
+e.GET("/api/user/mod", management.GetModsHandler)
+
+e.POST("/api/user/:id/mod", management.ModUserHandler)
+
+e.DELETE("/api/user/:id/mod", management.UnmodUserHandler)
 ```
 
 ## Built With
