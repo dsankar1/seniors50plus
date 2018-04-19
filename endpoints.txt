@@ -1,23 +1,73 @@
 // AUTH ENDPOINTS
-	e.POST("/api/auth/login", auth.LoginHandler)
+	Endpoint: /api/auth/login
+	Method: POST
+	Request Body:
     {
-        
+		"email":"",
+		"password":""
     }
 
-	e.POST("/api/auth/signup", auth.SignupHandler)
+	Endpoint: /api/auth/signup
+	Method: POST
+	Request Body:
+	{
+		"email":"",
+		"password":"",
+		"firstname":"",
+		"lastname":"",
+		"gender":"male" or "female",
+		"birthdate":"YYYY-MM-DD"
+	}
 
-	e.GET("/api/auth/signup/confirmation", auth.EmailConfirmationHandler)
+	*MUST INCLUDE AUTHORIZATION TOKEN FOR FOLLOWING ENDPOINTS*
 
-	// USER ENDPOINTS
-	e.GET("/api/user/:id", user.GetUserHandler)
+	// Get the details of a user with :id (Excludes email)
+	Endpoint: /api/user/:id
+	Method: GET
+	Request Body: none
 
-	e.GET("/api/user/:id/email", user.GetUserEmailHandler)
+	// Get the email of the user with :id
+	*note - only available if communication request is accepted*	
+	Endpoint: /api/user/:id/email
+	Method: GET
+	Request Body: none
 
-	e.POST("/api/user/list", user.GetUserListHandler)
+	// Get a detailed list of users provided a list of emails
+	Endpoint: /api/user/list
+	Method: POST
+	Request Body: 
+	[
+		{
+			"id":""
+		},
+		...
+	]
 
-	e.GET("/api/user", user.GetMyselfHandler)
+	// Gets information on the currently logged in user
+	Endpoint: /api/user
+	Method: GET
+	Request Body: none
 
-	e.PUT("/api/user", user.UpdateUserHandler)
+	// Edits the information of the currently logged in user
+	*note - Must include all fields, even if they aren't changed
+	Endpoint: /api/user
+	Method: POST
+	Request Body: 
+	{
+		"firstname":"",
+		"lastname":"",
+		"gender":"male" or "female",
+		"birthdate":"YYYY-MM-DD",
+		"about":"",
+		"tags": [
+			{
+				"content":""
+			}, 
+			...
+		]
+	}
+
+	// 
 
 	// OFFERS ENDPOINTS
 	e.POST("/api/offer", offer.PostOfferHandler)
