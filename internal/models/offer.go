@@ -1,34 +1,32 @@
 package models
 
-type RoommateOffer struct {
-	Id                  uint64   `json:"id"`
-	PostedBy            string   `json:"postedBy"`
-	GenderRequirement   string   `json:"genderRequirement"`
-	PreChosenProperty   bool     `json:"preChosenProperty"`
-	State               string   `json:"state"`
-	City                string   `json:"city"`
-	Zip                 uint     `json:"zip"`
-	BudgetMax           float32  `json:"budgetMax"`
-	BudgetMin           float32  `json:"budgetMin"`
-	PetsAllowed         bool     `json:"petsAllowed"`
-	SmokingAllowed      bool     `json:"smokingAllowed"`
-	Occupants           []string `json:"occupants"`
-	TargetOccupantCount uint     `json:"targetOccupantCount"`
-	PropertyImageUrl    string   `json:"propertyImageUrl"`
-	Active              bool     `json:"active"`
-}
+import (
+	"time"
+)
 
-var ExampleOffer = RoommateOffer{
-	GenderRequirement:   GenderMale,
-	PreChosenProperty:   false,
-	State:               "Georgia",
-	City:                "Marietta",
-	Zip:                 30008,
-	BudgetMax:           1100.00,
-	BudgetMin:           900.00,
-	PetsAllowed:         true,
-	SmokingAllowed:      false,
-	TargetOccupantCount: 2,
-	PropertyImageUrl:    "https://someamazonbucket.com",
-	Active:              true,
+const (
+	PropertyTypeHouse     = "house"
+	PropertyTypeApartment = "apartment"
+)
+
+type RoommateOffer struct {
+	ID                    uint
+	CreatedAt             time.Time
+	UpdatedAt             time.Time
+	DeletedAt             *time.Time
+	UploaderID            uint      `json:"uploaderID" gorm:"not null"`
+	GenderRequirement     string    `json:"genderRequirement" validate:"required" gorm:"type:enum('male','female','none'); not null; default:'none'"`
+	PreChosenProperty     bool      `json:"preChosenProperty" gorm:"not null"`
+	PropertyType          string    `json:"propertyType" validate:"required" gorm:"type:enum('house','apartment'); default:'apartment'; not null"`
+	State                 string    `json:"state" validate:"required" gorm:"not null"`
+	City                  string    `json:"city" validate:"required" gorm:"not null"`
+	Zip                   uint      `json:"zip" validate:"required" gorm:"not null"`
+	Budget                float32   `json:"budget" validate:"required" gorm:"not null"`
+	PetsAllowed           bool      `json:"petsAllowed" gorm:"not null"`
+	SmokingAllowed        bool      `json:"smokingAllowed" gorm:"not null"`
+	TargetResidentCount   uint      `json:"targetResidentCount" validate:"required" gorm:"not null; default:2"`
+	AcceptedResidentCount uint      `json:"acceptedResidentCount" gorm:"not null; default:1"`
+	PropertyImageURL      string    `json:"propertyImageURL"`
+	Residents             []Request `json:"residents" gorm:"foreignkey:OfferID"`
+	Requests              []Request `json:"requests" gorm:"foreignkey:OfferID"`
 }
