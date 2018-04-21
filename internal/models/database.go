@@ -3,7 +3,6 @@ package models
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/jinzhu/gorm"
 
@@ -21,7 +20,7 @@ type DatabaseConnection struct {
 func NewDatabaseConnection() *DatabaseConnection {
 	return &DatabaseConnection{
 		User:         "capstoneuser",
-		Password:     os.Getenv("DB_PASSWORD"),
+		Password:     "capst0ne18project!", //os.Getenv("DB_PASSWORD"),
 		Endpoint:     "capstone.cczajq2nppkf.us-east-2.rds.amazonaws.com",
 		DatabaseName: "roommates40plusv2",
 	}

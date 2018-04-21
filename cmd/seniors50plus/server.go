@@ -2,9 +2,8 @@ package main
 
 import (
 	"net/http"
-	"time"
-
 	"seniors50plus/internal/routing"
+	"time"
 
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/acme/autocert"

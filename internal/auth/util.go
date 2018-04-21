@@ -23,7 +23,7 @@ func SendConfirmationEmail(user *models.User) error {
 	claims["id"] = user.ID
 	claims["exp"] = time.Now().Add(time.Hour).Unix()
 	tokenString, _ := token.SignedString(GetKey())
-	tokenString = "https://roommates40plus.com/api/auth/signup/confirmation?token=" + tokenString
+	tokenString = "https://roommates40plus.com/?token=" + tokenString
 
 	tmpInfo := models.TemplateInfo{
 		Firstname: user.Firstname,

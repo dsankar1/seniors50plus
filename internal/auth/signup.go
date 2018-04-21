@@ -26,7 +26,12 @@ func EmailConfirmationHandler(c echo.Context) error {
 		if err := dbc.UpdateUser(&user); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
-		return c.Redirect(http.StatusPermanentRedirect, "/home")
+		res := struct {
+			Message string `json:"message"`
+		}{
+			"Success",
+		}
+		return c.JSON(http.StatusOK, res)
 	} else {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Token type assertion failed?")
 	}
