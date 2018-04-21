@@ -22,11 +22,11 @@ type User struct {
 	Gender          string    `json:"gender" validate:"required" gorm:"type:enum('male','female'); not null"`
 	Birthdate       string    `json:"birthdate" validate:"required" gorm:"type:date; not null"`
 	AdminLevel      string    `json:"adminLevel" gorm:"type:enum('user','moderator','susan'); not null; default:'user'"`
-	About           string    `json:"about" validate:"required" gorm:"type:varchar(3000); not null"`
+	About           string    `json:"about" gorm:"type:varchar(3000); not null"`
 	ProfileImageURL string    `json:"profileImageURL" gorm:"not null"`
 	Active          bool      `json:"-" gorm:"not null; default:false"`
 	PasswordHash    string    `json:"-" gorm:"not null"`
-	Tags            []Tag     `json:"tags" validate:"required" gorm:"foreignkey:UserID"`
+	Tags            []Tag     `json:"tags" gorm:"foreignkey:UserID"`
 	Invitations     []Request `json:"invitations" gorm:"foreignkey:UserID"`
 	Requests        []Request `json:"requests" gorm:"foreignkey:UserID"`
 	Flags           []Flag    `json:"flags" gorm:"foreignkey:UserID"`

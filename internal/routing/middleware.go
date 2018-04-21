@@ -60,7 +60,8 @@ func RegisterMiddleware(e *echo.Echo) {
 
 	// CORS
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		//AllowOrigins: []string{"https://roommates40plus.com"},
+		AllowOrigins: []string{"http://localhost:3000", "*"},
+		AllowMethods: []string{echo.PUT, echo.POST, echo.OPTIONS, echo.GET, echo.DELETE},
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 }
