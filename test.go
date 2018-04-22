@@ -13,5 +13,5 @@ func main() {
 		fmt.Println(err.Error())
 	}
 	defer dbc.Close()
-	fmt.Println(dbc.CreateTable(models.Report{}, models.Ban{}, models.Flag{}))
+	fmt.Println(dbc.CreateTable(models.RoommateOffer{}))
 }

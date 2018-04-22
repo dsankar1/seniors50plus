@@ -11,7 +11,7 @@ import (
 )
 
 func RegisterMiddleware(e *echo.Echo) {
-	e.Pre(middleware.HTTPSRedirect())
+	//e.Pre(middleware.HTTPSRedirect())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 
@@ -22,6 +22,9 @@ func RegisterMiddleware(e *echo.Echo) {
 	e.Use(middleware.JWTWithConfig(middleware.JWTConfig{
 		SigningKey: auth.GetKey(),
 		Skipper: func(c echo.Context) bool {
+			if c.Request().Method == echo.OPTIONS {
+				return true
+			}
 			if strings.HasPrefix(c.Path(), "/api") {
 				if strings.HasPrefix(c.Path(), "/api/auth") || strings.HasPrefix(c.Path(), "/api/test") {
 					return true

@@ -149,7 +149,6 @@ func GetUserListHandler(c echo.Context) error {
 }
 
 func UpdateUserHandler(c echo.Context) error {
-	fmt.Println(c.Request())
 	if token, ok := c.Get("user").(*jwt.Token); ok {
 		userId := uint(token.Claims.(jwt.MapClaims)["id"].(float64))
 		user := models.User{ID: userId}

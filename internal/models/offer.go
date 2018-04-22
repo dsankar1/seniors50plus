@@ -23,6 +23,8 @@ type RoommateOffer struct {
 	Zip                   uint      `json:"zip" validate:"required" gorm:"not null"`
 	Budget                float32   `json:"budget" validate:"required" gorm:"not null"`
 	PetsAllowed           bool      `json:"petsAllowed" gorm:"not null"`
+	Bathrooms             uint      `json:"bathrooms" gorm:"not null; default: 2"`
+	Bedrooms              uint      `json:"bedrooms" gorm:"not null; default: 2"`
 	SmokingAllowed        bool      `json:"smokingAllowed" gorm:"not null"`
 	TargetResidentCount   uint      `json:"targetResidentCount" validate:"required" gorm:"not null; default:2"`
 	AcceptedResidentCount uint      `json:"acceptedResidentCount" gorm:"not null; default:1"`

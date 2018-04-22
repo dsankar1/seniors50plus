@@ -6,6 +6,8 @@ import (
 	"seniors50plus/internal/utils"
 	"strconv"
 
+	"github.com/jinzhu/gorm"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
@@ -90,6 +92,9 @@ func GetMyOfferHandler(c echo.Context) error {
 	}
 	defer dbc.Close()
 	if err := dbc.GetOffer(&offer); err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return c.JSON(http.StatusOK, struct{}{})
+		}
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if err := dbc.AttachRequests(&offer); err != nil {
@@ -120,6 +125,8 @@ func PostOfferHandler(c echo.Context) error {
 		if err := dbc.CreateOffer(&offer); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
+		offer.Requests = []models.Request{}
+		offer.Residents = []models.Request{}
 		return c.JSON(http.StatusOK, offer)
 	} else {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Token type assertion failed?")
