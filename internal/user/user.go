@@ -10,6 +10,8 @@ import (
 	"time"
 	"unicode"
 
+	"github.com/jinzhu/gorm"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
@@ -21,22 +23,40 @@ func GetUserHandler(c echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
-	user := models.User{
-		ID: uint(userId),
-	}
+	res := struct {
+		Offer models.RoommateOffer `json:"offer"`
+		User  models.User          `json:"user"`
+	}{}
+	res.User.ID = uint(userId)
+	res.Offer.UploaderID = uint(userId)
 	dbc := models.NewDatabaseConnection()
 	if err := dbc.Open(); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
 	}
 	defer dbc.Close()
-	if err := dbc.GetUser(&user); err != nil {
+	if err := dbc.GetUser(&res.User); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	if err := dbc.AttachTags(&user); err != nil {
+	if err := dbc.AttachTags(&res.User); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	user.Email = ""
-	return c.JSON(http.StatusOK, user)
+	if err := dbc.GetOffer(&res.Offer); err != nil {
+		if !gorm.IsRecordNotFoundError(err) {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
+	}
+	if err := dbc.AttachResidents(&res.Offer); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	filtered := []models.Request{}
+	for i := 0; i < len(res.Offer.Residents); i++ {
+		if res.Offer.Residents[i].Status == models.RequestStatusAccepted {
+			filtered = append(filtered, res.Offer.Residents[i])
+		}
+	}
+	res.Offer.Residents = filtered
+	res.User.Email = ""
+	return c.JSON(http.StatusOK, res)
 }
 
 func GetUserEmailHandler(c echo.Context) error {

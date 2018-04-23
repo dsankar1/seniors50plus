@@ -52,6 +52,47 @@ func CreateResidentRequestHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, request)
 }
 
+func DeleteResidentRequestByIDHandler(c echo.Context) error {
+	var tokenId uint
+	if err := utils.GetIdFromContext(c, &tokenId); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	requestId, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, "Invalid request ID")
+	}
+	request := models.Request{
+		ID: uint(requestId),
+	}
+	dbc := models.NewDatabaseConnection()
+	if err := dbc.Open(); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
+	}
+	defer dbc.Close()
+	if err := dbc.GetResidentRequest(&request); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if request.UserID != tokenId {
+		return echo.NewHTTPError(http.StatusUnauthorized, "Not authorized to delete this request")
+	}
+	offer := models.RoommateOffer{
+		ID: request.OfferID,
+	}
+	if err := dbc.GetOffer(&offer); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "Error finding linked offer")
+	}
+	if request.Status == models.RequestStatusAccepted {
+		offer.AcceptedResidentCount--
+		if err := dbc.UpdateOffer(&offer); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Error updating offer")
+		}
+	}
+	if err := dbc.DeleteResidentRequest(&request); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	return c.JSON(http.StatusOK, request)
+}
+
 func DeleteResidentRequestHandler(c echo.Context) error {
 	var tokenId uint
 	if err := utils.GetIdFromContext(c, &tokenId); err != nil {

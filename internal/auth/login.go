@@ -5,6 +5,8 @@ import (
 	"seniors50plus/internal/models"
 	"time"
 
+	"github.com/jinzhu/gorm"
+
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 )
@@ -26,6 +28,9 @@ func LoginHandler(c echo.Context) error {
 	}
 	defer dbc.Close()
 	if err := dbc.GetUser(&user); err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Email not recognized")
+		}
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	if CheckPasswordHash(req.Password, user.PasswordHash) == false {

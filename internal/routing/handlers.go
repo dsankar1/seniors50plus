@@ -47,12 +47,16 @@ func RegisterHandlers(e *echo.Echo) {
 
 	e.DELETE("/api/offer/:id/request", request.DeleteCommunicationRequestHandler)
 
+	e.DELETE("/api/offer/request/:id", request.DeleteCommunicationRequestByIDHandler)
+
 	e.PUT("/api/offer/request/:id", request.RespondToCommunicationRequestHandler) //?status=value
 
 	// RESIDENT ENDPOINTS
 	e.POST("/api/user/:id/request", request.CreateResidentRequestHandler)
 
 	e.DELETE("/api/user/:id/request", request.DeleteResidentRequestHandler)
+
+	e.DELETE("/api/user/request/:id", request.DeleteResidentRequestByIDHandler)
 
 	e.PUT("/api/user/request/:id", request.RespondToResidentRequestHandler) //?status=value
 
