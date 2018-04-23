@@ -92,12 +92,52 @@ func (dbc *DatabaseConnection) AttachTags(user *User) error {
 
 func (dbc *DatabaseConnection) AttachCommunicationRequests(user *User) error {
 	db := dbc.db
-	return db.Table("communication_requests").Where("user_id = ?", user.ID).Find(&user.Requests).Error
+	if err := db.Table("communication_requests").Where("user_id = ?", user.ID).Find(&user.Requests).Error; err != nil {
+		return err
+	}
+	for i := 0; i < len(user.Requests); i++ {
+		if result := db.Where("id = ?", user.Requests[i].OfferID).First(&user.Requests[i].Offer); result.Error != nil {
+			if !result.RecordNotFound() {
+				return result.Error
+			}
+		}
+		if result := db.Where("id = ?", user.Requests[i].Offer.UploaderID).First(&user.Requests[i].User); result.Error != nil {
+			if !result.RecordNotFound() {
+				return result.Error
+			}
+		}
+		if user.Requests[i].Status != RequestStatusAccepted {
+			user.Requests[i].User.Email = ""
+		}
+	}
+	return nil
 }
 
 func (dbc *DatabaseConnection) AttachResidentInvitations(user *User) error {
 	db := dbc.db
-	return db.Table("residents").Where("user_id = ?", user.ID).Find(&user.Invitations).Error
+	if err := db.Table("residents").Where("user_id = ?", user.ID).Find(&user.Invitations).Error; err != nil {
+		return err
+	}
+	filtered := []Request{}
+	for i := 0; i < len(user.Invitations); i++ {
+		if user.Invitations[i].Status == RequestStatusDenied {
+			continue
+		}
+		if result := db.Where("id = ?", user.Invitations[i].OfferID).First(&user.Invitations[i].Offer); result.Error != nil {
+			if !result.RecordNotFound() {
+				return result.Error
+			}
+		}
+		if result := db.Where("id = ?", user.Invitations[i].Offer.UploaderID).First(&user.Invitations[i].User); result.Error != nil {
+			if !result.RecordNotFound() {
+				return result.Error
+			}
+		}
+		user.Invitations[i].User.Email = ""
+		filtered = append(filtered, user.Invitations[i])
+	}
+	user.Invitations = filtered
+	return nil
 }
 
 func (dbc *DatabaseConnection) AttachFlags(user *User) error {
@@ -151,12 +191,44 @@ func (dbc *DatabaseConnection) GetOffer(offer *RoommateOffer) error {
 
 func (dbc *DatabaseConnection) AttachResidents(offer *RoommateOffer) error {
 	db := dbc.db
-	return db.Table("residents").Where("offer_id = ?", offer.ID).Find(&offer.Residents).Error
+	if err := db.Table("residents").Where("offer_id = ?", offer.ID).Find(&offer.Residents).Error; err != nil {
+		return err
+	}
+	for i := 0; i < len(offer.Residents); i++ {
+		if result := db.Where("id = ?", offer.Residents[i].UserID).First(&offer.Residents[i].User); result.Error != nil {
+			if !result.RecordNotFound() {
+				return result.Error
+			}
+		}
+		if offer.Residents[i].Status != RequestStatusAccepted {
+			offer.Residents[i].User.Email = ""
+		}
+	}
+	return nil
 }
 
 func (dbc *DatabaseConnection) AttachRequests(offer *RoommateOffer) error {
 	db := dbc.db
-	return db.Table("communication_requests").Where("offer_id = ?", offer.ID).Find(&offer.Requests).Error
+	if err := db.Table("communication_requests").Where("offer_id = ?", offer.ID).Find(&offer.Requests).Error; err != nil {
+		return err
+	}
+	filtered := []Request{}
+	for i := 0; i < len(offer.Requests); i++ {
+		if offer.Requests[i].Status == RequestStatusDenied {
+			continue
+		}
+		if result := db.Where("id = ?", offer.Requests[i].UserID).First(&offer.Requests[i].User); result.Error != nil {
+			if !result.RecordNotFound() {
+				return result.Error
+			}
+		}
+		if offer.Requests[i].Status != RequestStatusAccepted {
+			offer.Requests[i].User.Email = ""
+		}
+		filtered = append(filtered, offer.Requests[i])
+	}
+	offer.Requests = filtered
+	return nil
 }
 
 // Communication request related db methods

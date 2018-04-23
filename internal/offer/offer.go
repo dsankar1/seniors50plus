@@ -26,11 +26,21 @@ func GetOfferHandler(c echo.Context) error {
 	}
 	defer dbc.Close()
 	if err := dbc.GetOffer(&offer); err != nil {
+		if gorm.IsRecordNotFoundError(err) {
+			return c.JSON(http.StatusOK, []models.Request{})
+		}
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	if err := dbc.AttachResidents(&offer); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
+	filtered := []models.Request{}
+	for i := 0; i < len(offer.Residents); i++ {
+		if offer.Residents[i].Status == models.RequestStatusAccepted {
+			filtered = append(filtered, offer.Residents[i])
+		}
+	}
+	offer.Residents = filtered
 	return c.JSON(http.StatusOK, offer)
 }
 
