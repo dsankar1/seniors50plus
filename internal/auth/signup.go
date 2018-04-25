@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"fmt"
 	"net/http"
 	"seniors50plus/internal/models"
 
@@ -23,6 +24,7 @@ func EmailConfirmationHandler(c echo.Context) error {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		user.Active = true
+		fmt.Println(user)
 		if err := dbc.UpdateUser(&user); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
@@ -62,11 +64,11 @@ func SignupHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
 	}
 	defer dbc.Close()
-	if err := SendConfirmationEmail(&user); err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
-	}
 	if err := dbc.CreateUser(&user); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
+	if err := SendConfirmationEmail(&user); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 	res := struct {
 		Message string `json:"message"`

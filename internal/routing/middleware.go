@@ -11,8 +11,8 @@ import (
 )
 
 func RegisterMiddleware(e *echo.Echo) {
-	e.Pre(middleware.HTTPSNonWWWRedirect())
-	e.Pre(middleware.NonWWWRedirect())
+	//e.Pre(middleware.HTTPSNonWWWRedirect())
+	//e.Pre(middleware.NonWWWRedirect())
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"errors"
-	"os"
 	"seniors50plus/internal/email"
 	"seniors50plus/internal/models"
 	"time"
@@ -46,7 +45,7 @@ func SendConfirmationEmail(user *models.User) error {
 }
 
 func GetKey() []byte {
-	return []byte(os.Getenv("ROOMMATES_KEY"))
+	return []byte("thissecretwillberemovedlater")
 }
 
 func HashPassword(password string) (string, error) {
