@@ -62,11 +62,11 @@ func SignupHandler(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "Error connecting to database")
 	}
 	defer dbc.Close()
-	if err := dbc.CreateUser(&user); err != nil {
-		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
-	}
 	if err := SendConfirmationEmail(&user); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+	if err := dbc.CreateUser(&user); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 	res := struct {
 		Message string `json:"message"`
