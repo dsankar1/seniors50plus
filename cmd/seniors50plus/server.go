@@ -1,9 +1,7 @@
 package main
 
 import (
-	"net/http"
 	"seniors50plus/internal/routing"
-	"time"
 
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/acme/autocert"
@@ -17,11 +15,11 @@ func main() {
 	routing.RegisterMiddleware(e)
 	routing.RegisterHandlers(e)
 
-	s := &http.Server{
+	/*s := &http.Server{
 		Addr:         ":1323",
 		ReadTimeout:  20 * time.Second,
 		WriteTimeout: 20 * time.Second,
 	}
-	e.Logger.Fatal(e.StartServer(s))
-	//e.Logger.Fatal(e.StartAutoTLS(":443"))
+	e.Logger.Fatal(e.StartServer(s))*/
+	e.Logger.Fatal(e.StartAutoTLS(":443"))
 }
