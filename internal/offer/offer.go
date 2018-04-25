@@ -1,6 +1,7 @@
 package offer
 
 import (
+	"fmt"
 	"net/http"
 	"seniors50plus/internal/models"
 	"seniors50plus/internal/utils"
@@ -135,6 +136,10 @@ func PostOfferHandler(c echo.Context) error {
 		if err := dbc.CreateOffer(&offer); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
+		elastic := models.NewElasticClient()
+		if err := elastic.Put(&offer); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
 		offer.Requests = []models.Request{}
 		offer.Residents = []models.Request{}
 		return c.JSON(http.StatusOK, offer)
@@ -159,6 +164,10 @@ func DeleteMyOfferHandler(c echo.Context) error {
 	if err := dbc.DeleteOffer(&offer); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
-	dbc.Close()
+	fmt.Println(offer.ID)
+	elastic := models.NewElasticClient()
+	if err := elastic.Delete(strconv.Itoa(int(offer.ID))); err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+	}
 	return c.JSON(http.StatusOK, offer)
 }

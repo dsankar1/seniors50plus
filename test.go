@@ -3,25 +3,32 @@ package main
 import (
 	"fmt"
 	"seniors50plus/internal/models"
+	"time"
 )
 
 func main() {
 	offer := models.RoommateOffer{
-		ID:         1,
-		UploaderID: 1,
-		State:      "GA",
-		City:       "Alpharetta",
-		Zip:        30005,
+		ID:                5,
+		UploaderID:        1,
+		State:             "GA",
+		City:              "Alpharetta",
+		Zip:               30005,
+		GenderRequirement: "male",
+		PropertyType:      "apartment",
+		CreatedAt:         time.Now(),
 	}
+	fmt.Println(offer)
 	elastic := models.NewElasticClient()
-
-	if res, err := elastic.Get(&offer); err != nil {
+	//elastic.Delete("4")
+	results := models.QueryResponse{}
+	if err := elastic.Get(&offer, &results); err != nil {
 		fmt.Println(err.Error())
-	} else {
-		fmt.Println(res.Hits)
 	}
-	//res, _ := elastic.Put(&offer)
-	//fmt.Println(res)
+	fmt.Println(results)
+	/*err := elastic.Put(&offer)
+	if err != nil {
+		fmt.Println(err)
+	}*/
 	/*if err := elastic.Put(&offer); err != nil {
 		fmt.Println(err.Error())
 	}

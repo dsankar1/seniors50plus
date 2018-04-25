@@ -86,6 +86,10 @@ func DeleteResidentRequestByIDHandler(c echo.Context) error {
 		if err := dbc.UpdateOffer(&offer); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Error updating offer")
 		}
+		elastic := models.NewElasticClient()
+		if err := elastic.Put(&offer); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
+		}
 	}
 	if err := dbc.DeleteResidentRequest(&request); err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
@@ -127,6 +131,10 @@ func DeleteResidentRequestHandler(c echo.Context) error {
 		offer.AcceptedResidentCount--
 		if err := dbc.UpdateOffer(&offer); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Error updating offer")
+		}
+		elastic := models.NewElasticClient()
+		if err := elastic.Put(&offer); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 	}
 	if err := dbc.DeleteResidentRequest(&request); err != nil {
@@ -176,6 +184,10 @@ func RespondToResidentRequestHandler(c echo.Context) error {
 		offer.AcceptedResidentCount++
 		if err := dbc.UpdateOffer(&offer); err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Error updating offer")
+		}
+		elastic := models.NewElasticClient()
+		if err := elastic.Put(&offer); err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 		}
 		if offer.AcceptedResidentCount == offer.TargetResidentCount {
 			if err := dbc.RemovePendingResidentRequests(&offer); err != nil {

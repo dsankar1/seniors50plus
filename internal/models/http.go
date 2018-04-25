@@ -31,12 +31,16 @@ type (
 		State               string  `json:"state" validate:"required"`
 		City                string  `json:"city" validate:"required"`
 		Zip                 uint    `json:"zip" validate:"required"`
-		HasPets             bool    `json:"hasPets" validate:"required"`
-		Smoker              bool    `json:"smoker" validate:"required"`
-		TargetOccupantCount uint    `json:"targetOccupantCount" validate:"required"`
+		SmokingAllowed      bool    `json:"smokingAllowed"`
+		PetsAllowed         bool    `json:"petsAllowed"`
+		TargetResidentCount uint    `json:"targetResidentCount" validate:"required"`
 		BudgetMax           float32 `json:"budgetMax" validate:"required"`
 		BudgetMin           float32 `json:"budgetMin" validate:"required"`
 		GenderRequirement   string  `json:"genderRequirement" validate:"required"`
+		Bedrooms            uint    `json:"bedrooms"`
+		Bathrooms           uint    `json:"bathrooms"`
+		PreChosenProperty   bool    `json:"preChosenProperty"`
+		PropertyType        string  `json:"propertyType"`
 	}
 
 	MatchResponse struct {

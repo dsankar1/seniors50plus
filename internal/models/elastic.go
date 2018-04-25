@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -18,9 +19,13 @@ type QueryResponse struct {
 }
 
 type Hits struct {
-	Total    uint            `json:"total"`
-	MaxScore uint            `json:"max_score"`
-	Hits     []RoommateOffer `json:"hits"`
+	Total    uint    `json:"total"`
+	MaxScore float64 `json:"max_score"`
+	Hits     []Hit   `json:"hits"`
+}
+
+type Hit struct {
+	Source RoommateOffer `json:"_source"`
 }
 
 func NewElasticClient() *Elastic {
@@ -29,45 +34,72 @@ func NewElasticClient() *Elastic {
 	}
 }
 
-func (e *Elastic) Put(offer *RoommateOffer) (*http.Response, error) {
+func (e *Elastic) Put(offer *RoommateOffer) error {
 	body, err := json.Marshal(offer)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	url := e.Domain + "/offers/offer/" + strconv.Itoa(int(offer.ID))
-	req, err := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
+	req, _ := http.NewRequest(http.MethodPut, url, bytes.NewBuffer(body))
 	req.Header.Add("Content-Type", "application/json")
-	return (&http.Client{Timeout: 10 * time.Second}).Do(req)
-}
-
-func (e *Elastic) Get(offer *RoommateOffer) (*QueryResponse, error) {
-	query := fmt.Sprintf(`/_search?q="genderRequirement:%v AND preChosenProperty:%v
-			AND propertyType:%v AND zip:%v AND petsAllowed:%v AND bathrooms:%v AND bedrooms:%v
-			AND smokingAllowed:%v AND targetResidentCount:%v"`, offer.GenderRequirement,
-		offer.PreChosenProperty, offer.PropertyType, offer.Zip, offer.PetsAllowed,
-		offer.Bathrooms, offer.Bedrooms, offer.SmokingAllowed, offer.TargetResidentCount)
-	url := e.Domain + query
-	client := &http.Client{Timeout: 10 * time.Second}
-	res, err := client.Get(url)
+	r, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	defer res.Body.Close()
-	queryRes := QueryResponse{}
-	if err := json.NewDecoder(res.Body).Decode(&queryRes); err != nil {
-		return nil, err
-	}
-	return &queryRes, nil
+	defer r.Body.Close()
+	return nil
 }
 
-func (e *Elastic) Delete(offerID string) (*http.Response, error) {
+func getJson(url string, target interface{}) error {
+	r, err := (&http.Client{Timeout: 10 * time.Second}).Get(url)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	return json.NewDecoder(r.Body).Decode(target)
+}
+
+func (e *Elastic) Get(offer *MatchRequest, results *QueryResponse) error {
+	query := "/offers/offer/_search?sort=CreatedAt:desc&q="
+	if offer.GenderRequirement != "" {
+		query += "genderRequirement:" + offer.GenderRequirement
+	}
+	if offer.Bedrooms != 0 {
+		query += " AND bedrooms:" + strconv.Itoa(int(offer.Bedrooms))
+	}
+	if offer.Bathrooms != 0 {
+		query += " AND bathrooms:" + strconv.Itoa(int(offer.Bathrooms))
+	}
+	if offer.State != "" {
+		query += " AND state:" + offer.State
+	}
+	if offer.City != "" {
+		query += " AND city:" + offer.City
+	}
+	if offer.Zip != 0 {
+		query += " AND zip:" + strconv.Itoa(int(offer.Zip))
+	}
+	if offer.PropertyType != "" {
+		query += " AND propertyType:" + offer.PropertyType
+	}
+	if offer.TargetResidentCount != 0 {
+		query += " AND targetResidentCount:" + strconv.Itoa(int(offer.TargetResidentCount))
+	}
+	query += fmt.Sprintf(" AND preChosenProperty:%v AND petsAllowed:%v AND smokingAllowed:%v",
+		offer.PreChosenProperty, offer.PetsAllowed, offer.SmokingAllowed)
+	query = strings.Replace(query, " ", "%20", -1)
+	url := e.Domain + query
+	fmt.Println(url)
+	return getJson(url, results)
+}
+
+func (e *Elastic) Delete(offerID string) error {
 	url := e.Domain + "/offers/offer/" + offerID
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	r, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	return (&http.Client{Timeout: 10 * time.Second}).Do(req)
+	defer r.Body.Close()
+	return nil
 }

@@ -90,10 +90,6 @@ func RegisterHandlers(e *echo.Echo) {
 
 	e.DELETE("/api/user/:id/mod", management.UnmodUserHandler)
 
-	/*----------------------------------------------------
-	////////////Below here needs to be done///////////////
-	----------------------------------------------------*/
-
 	// MATCH ENDPOINTS
 	e.POST("/api/match", match.FindMatchesHandler)
 
