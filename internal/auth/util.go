@@ -34,7 +34,7 @@ func SendConfirmationEmail(user *models.User) error {
 		"smtp.gmail.com",
 		587,
 		"roommates40plus@gmail.com",
-		"capst0ne!40Plus",
+		"capst0ne!2018$40Plus",
 		[]string{user.Email},
 		"Registration Confirmation",
 		registrationTemplate,
