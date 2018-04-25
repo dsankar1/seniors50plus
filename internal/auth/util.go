@@ -13,7 +13,7 @@ import (
 
 const (
 	requiredAge          = 40
-	registrationTemplate = "../../templates/registration.html"
+	registrationTemplate = "./templates/registration.html"
 )
 
 func SendConfirmationEmail(user *models.User) error {

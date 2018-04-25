@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"html/template"
 	"net/smtp"
+	"os"
+	"path/filepath"
 	"runtime"
 	"seniors50plus/internal/models"
 )
@@ -39,8 +41,8 @@ func catchPanic(err *error, functionName string) {
 
 func SendEmail(host string, port int, userName string, password string, to []string, subject string, templatePath string, info models.TemplateInfo) (err error) {
 	defer catchPanic(&err, "SendEmail")
-
-	t, err := template.ParseFiles(templatePath)
+	cwd, _ := os.Getwd()
+	t, err := template.ParseFiles(filepath.Join(cwd, templatePath))
 	if err != nil {
 		return err
 	}
